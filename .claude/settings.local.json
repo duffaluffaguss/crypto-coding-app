@@ -8,7 +8,12 @@
       "Bash(timeout:*)",
       "Bash(ping:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: Zero to Crypto Developer platform\n\nFeatures:\n- AI-powered onboarding quiz that generates personalized Web3 projects\n- Monaco code editor with Solidity syntax highlighting\n- Claude AI tutor with Socratic teaching method\n- Progressive lesson system with 17 pre-built lessons\n- Solidity compiler with real-time error feedback\n- Supabase auth + database with RLS policies\n- Coinbase Smart Wallet integration for Base Sepolia\n\nTech stack: Next.js 14, TypeScript, Tailwind, shadcn/ui, Supabase, Anthropic Claude\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(gh auth status:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate Claude Code local settings\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
     ]
   }
 }
