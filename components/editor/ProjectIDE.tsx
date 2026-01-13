@@ -1,0 +1,478 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { Button } from '@/components/ui/button';
+import { TutorChat } from '@/components/chat/TutorChat';
+import { LessonSidebar } from '@/components/lessons/LessonSidebar';
+import { createClient } from '@/lib/supabase/client';
+import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
+
+// Dynamically import Monaco to avoid SSR issues
+const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full bg-muted">
+      <div className="text-muted-foreground">Loading editor...</div>
+    </div>
+  ),
+});
+
+interface ProjectIDEProps {
+  project: Project;
+  initialFiles: ProjectFile[];
+  lessons: Lesson[];
+  progress: LearningProgress[];
+}
+
+export function ProjectIDE({ project, initialFiles, lessons, progress }: ProjectIDEProps) {
+  const [files, setFiles] = useState<ProjectFile[]>(initialFiles);
+  const [activeFile, setActiveFile] = useState<ProjectFile | null>(null);
+  const [code, setCode] = useState('');
+  const [compiling, setCompiling] = useState(false);
+  const [compilationResult, setCompilationResult] = useState<CompilationResult | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
+  const [showChat, setShowChat] = useState(true);
+  const supabase = createClient();
+
+  // Initialize with template if no files exist
+  useEffect(() => {
+    const initializeProject = async () => {
+      if (initialFiles.length === 0) {
+        const template = getTemplateForProjectType(project.project_type, project.name);
+        const filename = `${project.name.replace(/\s+/g, '')}.sol`;
+
+        const { data: newFile } = await supabase
+          .from('project_files')
+          .insert({
+            project_id: project.id,
+            filename,
+            content: template,
+            file_type: 'solidity',
+            is_template: true,
+          })
+          .select()
+          .single();
+
+        if (newFile) {
+          setFiles([newFile]);
+          setActiveFile(newFile);
+          setCode(template);
+        }
+      } else {
+        setActiveFile(initialFiles[0]);
+        setCode(initialFiles[0].content);
+      }
+
+      // Set first available lesson
+      if (lessons.length > 0) {
+        setCurrentLesson(lessons[0]);
+      }
+    };
+
+    initializeProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const createInitialFile = async () => {
+    const template = getTemplateForProjectType(project.project_type, project.name);
+    const filename = `${project.name.replace(/\s+/g, '')}.sol`;
+
+    const { data: newFile } = await supabase
+      .from('project_files')
+      .insert({
+        project_id: project.id,
+        filename,
+        content: template,
+        file_type: 'solidity',
+        is_template: true,
+      })
+      .select()
+      .single();
+
+    if (newFile) {
+      setFiles([newFile]);
+      setActiveFile(newFile);
+      setCode(template);
+    }
+  };
+
+  const getTemplateForProjectType = (type: string, name: string): string => {
+    const contractName = name.replace(/\s+/g, '');
+
+    switch (type) {
+      case 'nft_marketplace':
+        return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ${contractName} {
+    // Welcome to your NFT Marketplace!
+    // Follow the lessons on the right to build it step by step.
+
+    string public name = "${name}";
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // TODO: Add your marketplace logic here
+    // Lesson 1: Add state variables for items
+    // Lesson 2: Create a struct for market items
+    // Lesson 3: Add listing functionality
+}`;
+
+      case 'token':
+        return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ${contractName} {
+    // Your custom ERC-20 token!
+
+    string public name = "${name}";
+    string public symbol = "${contractName.substring(0, 4).toUpperCase()}";
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
+
+    mapping(address => uint256) public balanceOf;
+
+    constructor(uint256 _initialSupply) {
+        totalSupply = _initialSupply * 10 ** decimals;
+        balanceOf[msg.sender] = totalSupply;
+    }
+
+    // TODO: Add transfer functionality
+}`;
+
+      case 'dao':
+        return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ${contractName} {
+    // Your Decentralized Autonomous Organization!
+
+    string public name = "${name}";
+    uint256 public memberCount;
+
+    mapping(address => bool) public isMember;
+
+    constructor() {
+        isMember[msg.sender] = true;
+        memberCount = 1;
+    }
+
+    // TODO: Add membership and voting functionality
+}`;
+
+      default:
+        return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ${contractName} {
+    // Your Web3 project starts here!
+
+    string public name = "${name}";
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+}`;
+    }
+  };
+
+  const handleCodeChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      setCode(value);
+      setCompilationResult(null);
+    }
+  };
+
+  const saveFile = async () => {
+    if (!activeFile) return;
+
+    await supabase
+      .from('project_files')
+      .update({ content: code })
+      .eq('id', activeFile.id);
+
+    setFiles((prev) =>
+      prev.map((f) => (f.id === activeFile.id ? { ...f, content: code } : f))
+    );
+  };
+
+  const compileCode = async () => {
+    setCompiling(true);
+    setCompilationResult(null);
+
+    try {
+      const response = await fetch('/api/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceCode: code,
+          contractName: activeFile?.filename.replace('.sol', ''),
+        }),
+      });
+
+      const result = await response.json();
+      setCompilationResult(result);
+
+      if (result.success) {
+        // Save the file after successful compilation
+        await saveFile();
+      }
+    } catch (error) {
+      setCompilationResult({
+        success: false,
+        errors: [{ message: 'Failed to compile', severity: 'error' }],
+      });
+    } finally {
+      setCompiling(false);
+    }
+  };
+
+  return (
+    <div className="h-[calc(100vh-3.5rem)] flex">
+      {/* File Explorer & Lessons */}
+      <div className="w-64 border-r border-border bg-card flex flex-col">
+        {/* File Explorer */}
+        <div className="p-3 border-b border-border">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Files
+          </h3>
+          <div className="space-y-1">
+            {files.map((file) => (
+              <button
+                key={file.id}
+                onClick={() => {
+                  setActiveFile(file);
+                  setCode(file.content);
+                }}
+                className={`w-full text-left px-2 py-1.5 text-sm rounded ${
+                  activeFile?.id === file.id
+                    ? 'bg-primary/10 text-primary'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  {file.filename}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Lessons */}
+        <LessonSidebar
+          lessons={lessons}
+          progress={progress}
+          currentLesson={currentLesson}
+          onSelectLesson={setCurrentLesson}
+        />
+      </div>
+
+      {/* Main Editor Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Toolbar */}
+        <div className="h-12 border-b border-border bg-card flex items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{project.name}</span>
+            {activeFile && (
+              <span className="text-sm text-muted-foreground">
+                / {activeFile.filename}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={saveFile}>
+              Save
+            </Button>
+            <Button size="sm" onClick={compileCode} disabled={compiling}>
+              {compiling ? (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-2 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Compiling...
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Compile
+                </>
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowChat(!showChat)}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+            </Button>
+          </div>
+        </div>
+
+        {/* Editor + Chat */}
+        <div className="flex-1 flex">
+          {/* Code Editor */}
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1">
+              <MonacoEditor
+                height="100%"
+                language="sol"
+                theme="vs-dark"
+                value={code}
+                onChange={handleCodeChange}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  tabSize: 4,
+                  wordWrap: 'on',
+                }}
+              />
+            </div>
+
+            {/* Compilation Output */}
+            {compilationResult && (
+              <div className="border-t border-border bg-card p-4 max-h-48 overflow-auto">
+                {compilationResult.success ? (
+                  <div className="flex items-center gap-2 text-green-500">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="font-medium">
+                      Compilation successful!
+                    </span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-destructive">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                      <span className="font-medium">Compilation failed</span>
+                    </div>
+                    {compilationResult.errors?.map((error, i) => (
+                      <pre
+                        key={i}
+                        className="text-xs text-destructive bg-destructive/10 p-2 rounded overflow-x-auto"
+                      >
+                        {error.message}
+                      </pre>
+                    ))}
+                  </div>
+                )}
+                {compilationResult.warnings && compilationResult.warnings.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {compilationResult.warnings.map((warning, i) => (
+                      <pre
+                        key={i}
+                        className="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded overflow-x-auto"
+                      >
+                        {warning.message}
+                      </pre>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Tutor Chat */}
+          {showChat && (
+            <div className="w-80 border-l border-border">
+              <TutorChat
+                project={project}
+                currentLesson={currentLesson}
+                currentCode={code}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
