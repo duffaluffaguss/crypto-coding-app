@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useChat } from 'ai/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { Project, Lesson, ChatMessage } from '@/types';
+import { createClient } from '@/lib/supabase/client';
+import type { Project, Lesson } from '@/types';
 
 interface TutorChatProps {
   project: Project;
@@ -11,94 +13,143 @@ interface TutorChatProps {
   currentCode: string;
 }
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
-
 export function TutorChat({ project, currentLesson, currentCode }: TutorChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: `Hey! I'm Sol, your Solidity mentor. I'm here to help you build **${project.name}**.\n\nI won't write the code for you, but I'll guide you every step of the way. Ask me anything about your current lesson or if you're stuck!\n\nWhat would you like to learn first?`,
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
+  const [hintLevel, setHintLevel] = useState(0);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
+    api: '/api/ai/chat',
+    body: {
+      context: {
+        projectName: project.name,
+        projectType: project.project_type,
+        currentLesson: currentLesson?.title || 'Getting Started',
+        currentGoal: currentLesson?.description || 'Build your first smart contract',
+        currentCode,
+      },
+    },
+    initialMessages: [
+      {
+        id: 'welcome',
+        role: 'assistant',
+        content: `Hey! I'm Sol, your Solidity mentor. I'm here to help you build **${project.name}**.\n\nI won't write the code for you, but I'll guide you every step of the way. Ask me anything about your current lesson or if you're stuck!\n\nWhat would you like to learn first?`,
+      },
+    ],
+    onFinish: async (message) => {
+      // Persist assistant message to database
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('chat_messages').insert({
+            user_id: user.id,
+            project_id: project.id,
+            role: 'assistant',
+            content: message.content,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to save message:', error);
+      }
+    },
+  });
 
+  // Load chat history on mount
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const loadChatHistory = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
+      const { data: history } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('project_id', project.id)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
+      if (history && history.length > 0) {
+        const loadedMessages = history.map((msg, index) => ({
+          id: msg.id || `msg-${index}`,
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        }));
+        setMessages(loadedMessages);
+      }
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
+    loadChatHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Save user message to database before sending
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim()) return;
 
     try {
-      const response = await fetch('/api/ai/tutor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: input.trim(),
-          context: {
-            projectName: project.name,
-            projectType: project.project_type,
-            currentLesson: currentLesson?.title || 'Getting Started',
-            currentGoal: currentLesson?.description || 'Build your first smart contract',
-            currentCode,
-          },
-        }),
-      });
-
-      const data = await response.json();
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response || "I'm having trouble responding right now. Please try again.",
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('chat_messages').insert({
+          user_id: user.id,
+          project_id: project.id,
+          role: 'user',
+          content: input.trim(),
+        });
+      }
     } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "Sorry, I'm having trouble connecting. Please try again in a moment.",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+      console.error('Failed to save message:', error);
     }
+
+    handleSubmit(e);
+  };
+
+  // Request a hint
+  const requestHint = async () => {
+    const newHintLevel = Math.min(hintLevel + 1, 3);
+    setHintLevel(newHintLevel);
+
+    const hintRequest = `I need a hint for this lesson. This is hint request #${newHintLevel}. My current goal is: ${currentLesson?.description || 'Build my smart contract'}. Please give me a ${newHintLevel === 1 ? 'gentle nudge in the right direction' : newHintLevel === 2 ? 'more specific hint' : 'very detailed hint without giving the full answer'}.`;
+
+    // Simulate form submission with hint request
+    const fakeEvent = {
+      preventDefault: () => {},
+    } as React.FormEvent<HTMLFormElement>;
+
+    // Save hint request
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('chat_messages').insert({
+          user_id: user.id,
+          project_id: project.id,
+          role: 'user',
+          content: hintRequest,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save hint request:', error);
+    }
+
+    // Manually append message and trigger API call
+    setMessages([
+      ...messages,
+      { id: Date.now().toString(), role: 'user', content: hintRequest },
+    ]);
   };
 
   const formatMessage = (content: string) => {
-    // Simple markdown-like formatting
-    return content
-      .split('\n')
-      .map((line, i) => {
-        // Bold text
-        line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // Code blocks
-        line = line.replace(/`(.*?)`/g, '<code class="bg-muted px-1 rounded text-sm">$1</code>');
-        return <p key={i} className="mb-2" dangerouslySetInnerHTML={{ __html: line }} />;
-      });
+    return content.split('\n').map((line, i) => {
+      // Bold text
+      line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Code blocks
+      line = line.replace(/`(.*?)`/g, '<code class="bg-muted px-1 rounded text-sm font-mono">$1</code>');
+      return <p key={i} className="mb-2 last:mb-0" dangerouslySetInnerHTML={{ __html: line }} />;
+    });
   };
 
   return (
@@ -121,12 +172,35 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
               />
             </svg>
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="text-sm font-semibold">Sol - AI Tutor</h3>
             <p className="text-xs text-muted-foreground">
               {currentLesson?.title || 'Getting Started'}
             </p>
           </div>
+          {/* Hint button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={requestHint}
+            disabled={isLoading}
+            className="text-xs"
+          >
+            <svg
+              className="w-3 h-3 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+            Hint {hintLevel > 0 && `(${hintLevel}/3)`}
+          </Button>
         </div>
       </div>
 
@@ -156,17 +230,17 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
             </div>
           </div>
         ))}
-        {loading && (
+        {isLoading && (
           <div className="flex justify-start">
             <div className="bg-muted rounded-lg px-3 py-2">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" />
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
                 <div
-                  className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce"
+                  className="w-2 h-2 rounded-full bg-primary animate-bounce"
                   style={{ animationDelay: '0.1s' }}
                 />
                 <div
-                  className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce"
+                  className="w-2 h-2 rounded-full bg-primary animate-bounce"
                   style={{ animationDelay: '0.2s' }}
                 />
               </div>
@@ -177,16 +251,16 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} className="p-3 border-t border-border">
+      <form onSubmit={onSubmit} className="p-3 border-t border-border">
         <div className="flex gap-2">
           <Input
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Ask Sol anything..."
-            disabled={loading}
+            disabled={isLoading}
             className="flex-1"
           />
-          <Button type="submit" size="icon" disabled={loading || !input.trim()}>
+          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
             <svg
               className="w-4 h-4"
               fill="none"

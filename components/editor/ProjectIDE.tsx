@@ -5,7 +5,11 @@ import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { TutorChat } from '@/components/chat/TutorChat';
 import { LessonSidebar } from '@/components/lessons/LessonSidebar';
+import { ConnectButton } from '@/components/wallet/ConnectButton';
+import { DeployButton } from '@/components/wallet/DeployButton';
+import { ContractInteraction } from '@/components/wallet/ContractInteraction';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
 
 // Dynamically import Monaco to avoid SSR issues
@@ -33,6 +37,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [compilationResult, setCompilationResult] = useState<CompilationResult | null>(null);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [showChat, setShowChat] = useState(true);
+  const [deployedContract, setDeployedContract] = useState<string | null>(project.contract_address);
   const supabase = createClient();
 
   // Initialize with template if no files exist
@@ -282,6 +287,7 @@ contract ${contractName} {
           progress={progress}
           currentLesson={currentLesson}
           onSelectLesson={setCurrentLesson}
+          projectId={project.id}
         />
       </div>
 
@@ -301,7 +307,7 @@ contract ${contractName} {
             <Button variant="outline" size="sm" onClick={saveFile}>
               Save
             </Button>
-            <Button size="sm" onClick={compileCode} disabled={compiling}>
+            <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling}>
               {compiling ? (
                 <>
                   <svg
@@ -326,9 +332,26 @@ contract ${contractName} {
                   Compiling...
                 </>
               ) : (
-                <>
+                'Compile'
+              )}
+            </Button>
+            <div className="w-px h-6 bg-border mx-1" />
+            <ConnectButton />
+            <DeployButton
+              projectId={project.id}
+              code={code}
+              contractName={activeFile?.filename.replace('.sol', '') || 'Contract'}
+              compilationResult={compilationResult}
+              onCompile={compileCode}
+              onDeploySuccess={(address, txHash) => {
+                setDeployedContract(address);
+              }}
+            />
+            {deployedContract && (
+              <Link href={`/share/${project.id}`} target="_blank">
+                <Button variant="outline" size="sm" className="gap-2">
                   <svg
-                    className="w-4 h-4 mr-2"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -337,19 +360,14 @@ contract ${contractName} {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
                     />
                   </svg>
-                  Compile
-                </>
-              )}
-            </Button>
+                  Share
+                </Button>
+              </Link>
+            )}
+            <div className="w-px h-6 bg-border mx-1" />
             <Button
               variant="ghost"
               size="sm"
@@ -458,6 +476,14 @@ contract ${contractName} {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Contract Interaction Panel */}
+            {deployedContract && compilationResult?.abi && (
+              <ContractInteraction
+                contractAddress={deployedContract}
+                abi={compilationResult.abi}
+              />
             )}
           </div>
 

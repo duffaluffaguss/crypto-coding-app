@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { StreakDisplay } from '@/components/gamification/StreakDisplay';
 
 export default async function DashboardLayout({
   children,
@@ -41,6 +42,7 @@ export default async function DashboardLayout({
             </Link>
           </div>
           <div className="flex items-center gap-4">
+            <StreakDisplay />
             <span className="text-sm text-muted-foreground">
               {profile?.display_name || user.email}
             </span>
