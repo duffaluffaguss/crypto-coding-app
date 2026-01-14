@@ -101,22 +101,42 @@
 - `supabase/migrations/001_add_streaks.sql`
 - `supabase/migrations/002_public_projects.sql`
 
+### Session 2 Continued (2026-01-13)
+**Completed:**
+- Created `dev-log-manager` skill for managing task logs efficiently
+  - `scripts/log_utils.py` - CLI for summary, search, stats commands
+  - `scripts/archive_log.py` - Auto-archive old session entries
+  - `references/log-template.md` - Template for new task logs
+- Fixed Windows encoding issues in log utilities
+- Added support for multiple session header formats
+- Tested all log utilities on TODO.md
+
+**Skill Location:** `~/.claude/skills/dev-log-manager/`
+
 ---
 
 ## Next Steps (Priority Order)
 
-### Immediate (Before First User Test)
-1. **Test with real Supabase instance** - Verify all DB operations work
-2. **Test wallet connection flow** - Ensure Coinbase Smart Wallet connects properly
-3. **Test full deployment cycle** - Compile → Connect → Deploy → Share
-4. **Add error boundaries** - Graceful error handling in React components
+### Tomorrow - Setup & Testing
+1. **Set up Supabase instance** - Create project, run schema.sql and migrations
+2. **Configure environment** - Add Supabase + Anthropic keys to .env.local
+3. **Test auth flow** - Signup, login, logout with real Supabase
+4. **Test wallet connection** - Coinbase Smart Wallet on Base Sepolia
+5. **Test full deployment cycle** - Compile → Connect → Deploy → Share
 
-### Short Term (Phase 4)
-1. Add more project templates (Game, Social)
-2. Expand lesson content for existing templates
-3. Implement code validation (check if lesson requirements are met)
+### This Week - Polish & Content
+1. **Add error boundaries** - Graceful error handling in React components
+2. **Expand lesson content** - More detailed steps for NFT marketplace
+3. **Add code validation** - Check if lesson requirements are met
+4. **Game project template** - New template with game-focused lessons
 
-### Medium Term (Phase 5-6)
-1. AI-generated frontend components
-2. Production deployment (Vercel + Supabase)
-3. Base Mainnet support
+### Next Week - Phase 5 Start
+1. AI-generated React components for deployed contracts
+2. Simple frontend builder UI
+3. Preview deployed frontend functionality
+
+### Backlog
+- Production deployment (Vercel + Supabase)
+- Base Mainnet support
+- Dark mode toggle
+- Mobile responsive IDE
