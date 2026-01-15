@@ -42,11 +42,17 @@
 - [x] Streak tracking for daily engagement (StreakDisplay.tsx)
 
 ## Phase 4: More Content
-- [ ] Game project template + lessons
-- [ ] Social project template + lessons
-- [ ] Advanced NFT lessons (ERC-721)
-- [ ] Token lessons (full ERC-20)
-- [ ] DAO voting implementation lessons
+- [x] Game project template + lessons (8 lessons for lottery game)
+- [x] Social project template + lessons (8 lessons for decentralized social platform)
+- [x] Advanced NFT lessons (ERC-721) - 8 lessons covering full standard
+- [x] Token lessons (full ERC-20) - expanded to 9 lessons (mint, burn, pausable)
+- [x] DAO voting lessons - trimmed to 5 essential lessons
+- [x] **Creator project type** - 14 lessons for artists, musicians, makers:
+  - Basics, minting, selling, royalties, collaborator splits
+  - Fan memberships, unlockables, portfolio views
+  - Event tickets (anti-scalping), custom commissions (escrow)
+  - Crowdfunding (Kickstarter-style), licensing (stock content)
+  - Physical item claims (merch/prints), bundles & tiers
 
 ## Phase 5: Frontend Builder
 - [ ] AI-generated React components for contracts
@@ -112,6 +118,73 @@
 - Tested all log utilities on TODO.md
 
 **Skill Location:** `~/.claude/skills/dev-log-manager/`
+
+### Session 3 (2026-01-14)
+**Completed:**
+- Reviewed entire codebase and task list
+- Fixed build warnings in `next.config.js` (suppressed unused wagmi connector warnings)
+- Added Game project template (blockchain lottery) with 8 comprehensive lessons:
+  - game-01-basics: Contract foundation
+  - game-02-entry: Entry fee & player tracking
+  - game-03-prize: Prize pool & game state
+  - game-04-random: Pseudo-random winner selection
+  - game-05-picking: Winner selection logic
+  - game-06-payout: Prize distribution
+  - game-07-reset: New round functionality
+  - game-08-views: Frontend helper functions
+- Added Social project template (decentralized social platform) with 8 lessons:
+  - social-01-basics: Platform foundation
+  - social-02-profiles: User registration with usernames
+  - social-03-posts: Creating on-chain posts (280 char limit)
+  - social-04-likes: Like/unlike functionality
+  - social-05-tipping: ETH tips to content creators
+  - social-06-following: Follow/unfollow system
+  - social-07-feed: View functions for frontend
+  - social-08-updates: Profile updates & post deletion
+- Added game and social templates to ProjectIDE component
+- Created ErrorBoundary component with retry functionality
+- Integrated ErrorBoundary into Providers wrapper
+- Created CLAUDE_DESKTOP_SETUP.md with copy-paste browser instructions
+- Added Advanced NFT (ERC-721) lessons:
+  - nft-09 to nft-16: Full ERC-721 standard implementation
+- Expanded Token (ERC-20) lessons from 5 to 9:
+  - token-06-minting: Owner minting with max supply
+  - token-07-burning: Burn and burnFrom functions
+  - token-08-pausable: Emergency pause functionality
+  - token-09-metadata: Full ERC-20 interface checklist
+- Expanded DAO lessons from 4 to 10:
+  - dao-05-quorum: Minimum participation requirements
+  - dao-06-execution: Proposal execution logic
+  - dao-07-treasury: DAO fund management
+  - dao-08-advanced-proposals: Proposal types (funding, etc.)
+  - dao-09-delegation: Vote delegation system
+  - dao-10-governance-views: Frontend view functions
+- Trimmed DAO lessons from 10 to 5 (kept essentials: basics, joining, proposals, voting, quorum)
+- Added new **Creator** project type (14 lessons) for artists/musicians/makers:
+  - creator-01: Your Creator Contract (no middleman concept)
+  - creator-02: Minting Your Work (digital certificates for art/music)
+  - creator-03: Selling to Collectors (direct payments, edition tracking)
+  - creator-04: Royalties on Resales (earn forever on secondary sales)
+  - creator-05: Split Payments (auto-split with bandmates/collaborators)
+  - creator-06: Fan Memberships (Patreon-style but you own it)
+  - creator-07: Unlockable Content (gated downloads, stems, bonus content)
+  - creator-08: Portfolio View (frontend integration)
+  - creator-09: Event Tickets (anti-scalping, max resale prices)
+  - creator-10: Custom Commissions (escrow protection for both sides)
+  - creator-11: Crowdfunding (Kickstarter-style with refunds)
+  - creator-12: Licensing (stock photos/music, personal vs commercial)
+  - creator-13: Physical Items (merch, prints, vinyl linked to digital)
+  - creator-14: Bundles & Tiers (deluxe packages, supporter tiers)
+- **Phase 4 Complete!** Total: 52 lessons across 6 project types
+- Build passing successfully
+
+**Files Modified:**
+- `next.config.js` - Added webpack aliases to suppress warnings
+- `supabase/seed-lessons.sql` - 52 lessons total (14 creator, trimmed DAO)
+- `components/editor/ProjectIDE.tsx` - Added game, social & creator template cases
+- `components/providers.tsx` - Added ErrorBoundary wrapper
+- `components/ErrorBoundary.tsx` - New component
+- `CLAUDE_DESKTOP_SETUP.md` - New file with browser setup instructions
 
 ---
 

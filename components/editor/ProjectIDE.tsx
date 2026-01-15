@@ -169,6 +169,77 @@ contract ${contractName} {
     // TODO: Add membership and voting functionality
 }`;
 
+      case 'game':
+        return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ${contractName} {
+    // Your Blockchain Lottery Game!
+    // Players can enter by paying a fee, and one lucky winner takes the prize pool!
+
+    string public name = "${name}";
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // TODO: Follow the lessons to build your lottery game!
+    // Lesson 1: Add entry fee and player tracking
+    // Lesson 2: Track the prize pool
+    // Lesson 3: Pick a winner and send the prize
+}`;
+
+      case 'social':
+        return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ${contractName} {
+    // Your Decentralized Social Platform!
+    // Users can create profiles, post content, follow others, and tip creators!
+
+    string public platformName = "${name}";
+    address public owner;
+    uint256 public userCount;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // TODO: Follow the lessons to build your social platform!
+    // Lesson 1: Create user profiles with usernames
+    // Lesson 2: Add posting functionality
+    // Lesson 3: Implement likes and tipping
+}`;
+
+      case 'creator':
+        return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+// Your Creator Contract - like Bandcamp/Etsy/Gumroad but YOU own it!
+// No platform fees, no algorithm changes, no account bans
+// Perfect for: artists, musicians, photographers, designers, makers
+
+contract ${contractName} {
+    string public creatorName = "${name}";
+    address public creator;
+
+    constructor() {
+        creator = msg.sender;
+    }
+
+    modifier onlyCreator() {
+        require(msg.sender == creator, "Only the creator can do this");
+        _;
+    }
+
+    // TODO: Follow the lessons to build your creator platform!
+    // Lesson 1: Mint your creative works (art, music, photos)
+    // Lesson 2: Sell directly to fans - no middleman!
+    // Lesson 3: Earn royalties on every resale - forever!
+    // Lesson 4: Split payments with collaborators/bandmates
+}`;
+
       default:
         return `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;

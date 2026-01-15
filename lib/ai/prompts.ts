@@ -6,7 +6,7 @@ Given a user's interests and hobbies, generate 3 unique smart contract project i
 
 For each project, provide a JSON object with:
 1. "name": A catchy, memorable project name (2-3 words max)
-2. "type": One of ["nft_marketplace", "token", "dao", "game", "social"]
+2. "type": One of ["nft_marketplace", "token", "dao", "game", "social", "creator"]
 3. "description": A 2-3 sentence pitch explaining what it does
 4. "realWorldUse": How this specifically connects to their stated interest
 5. "monetizationPath": A realistic way they could earn crypto from this project
