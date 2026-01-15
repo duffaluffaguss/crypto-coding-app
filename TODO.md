@@ -188,28 +188,47 @@
 
 ---
 
-## Next Steps (Priority Order)
+## Next Steps (In Plain English)
 
-### Tomorrow - Setup & Testing
-1. **Set up Supabase instance** - Create project, run schema.sql and migrations
-2. **Configure environment** - Add Supabase + Anthropic keys to .env.local
-3. **Test auth flow** - Signup, login, logout with real Supabase
-4. **Test wallet connection** - Coinbase Smart Wallet on Base Sepolia
-5. **Test full deployment cycle** - Compile → Connect → Deploy → Share
+### Step 1: Set Up the Database (Required to run the app)
+**What:** Supabase is a free service that stores all user accounts, projects, and lesson progress.
+**How:** See `CLAUDE_DESKTOP_SETUP.md` for copy-paste instructions you can give to Claude Desktop.
 
-### This Week - Polish & Content
-1. **Add error boundaries** - Graceful error handling in React components
-2. **Expand lesson content** - More detailed steps for NFT marketplace
-3. **Add code validation** - Check if lesson requirements are met
-4. **Game project template** - New template with game-focused lessons
+Tasks:
+1. Create a free Supabase account at https://supabase.com
+2. Create a new project (takes about 2 minutes to set up)
+3. Copy and run the SQL setup files (these create all the tables needed)
+4. Copy your project keys into the `.env.local` file
 
-### Next Week - Phase 5 Start
-1. AI-generated React components for deployed contracts
-2. Simple frontend builder UI
-3. Preview deployed frontend functionality
+### Step 2: Get the AI Working
+**What:** The AI tutor needs an API key from Anthropic (the company that makes Claude).
+**How:**
+1. Go to https://console.anthropic.com
+2. Create an account and get an API key
+3. Paste it in `.env.local`
 
-### Backlog
-- Production deployment (Vercel + Supabase)
-- Base Mainnet support
-- Dark mode toggle
-- Mobile responsive IDE
+### Step 3: Test Everything
+Once Steps 1-2 are done, run `npm run dev` and test:
+- [ ] Can you sign up and log in?
+- [ ] Can you go through the onboarding quiz?
+- [ ] Can you start a project and see the code editor?
+- [ ] Does the AI tutor respond when you ask questions?
+- [ ] Can you connect a wallet and deploy?
+
+### Step 4: Phase 5 - Frontend Builder (Future)
+**What:** Let users create a website for their project without writing code.
+**Why:** Right now users can build smart contracts, but they need a website to let people use them. This would auto-generate that website.
+
+### Step 5: Phase 6 - Launch for Real (Future)
+**What:** Put this on the actual internet so anyone can use it.
+**Tasks:**
+- Deploy to Vercel (free website hosting)
+- Set up production database
+- Switch from test blockchain to real blockchain
+- Add analytics to see how many people use it
+
+### Ideas for Later
+- Dark mode (easier on the eyes at night)
+- Mobile-friendly version
+- Let users download their project as a zip file
+- Community page to show off what people have built
