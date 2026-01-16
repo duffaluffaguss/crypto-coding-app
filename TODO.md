@@ -63,9 +63,12 @@
 - [ ] Custom domain support
 
 ## Phase 6: Production
-- [ ] Deploy to Vercel
-- [ ] Set up production Supabase
+- [x] Deploy to Vercel (https://crypto-coding-app.vercel.app)
+- [x] Configure Vercel environment variables
+- [ ] Fix Supabase RLS policies for lessons table (blocking issue)
+- [ ] Run migrations on production Supabase (003_add_contract_abi.sql)
 - [ ] Add Base Mainnet option
+- [ ] Add Anthropic API key to Vercel (for AI features)
 - [ ] Analytics/tracking
 - [ ] Error monitoring (Sentry)
 - [ ] Rate limiting for AI endpoints
@@ -232,9 +235,109 @@
 - `types/index.ts` - Added creator type, contract_abi/generated_frontend fields
 - `package.json` - Added test scripts, @playwright/test dependency
 
+### Session 4 Continued (2026-01-15)
+**Completed:**
+- **Phase 6: Production Deployment (partial)**
+  - Deployed app to Vercel: https://crypto-coding-app.vercel.app
+  - Fixed Vercel build error by moving `app/(dashboard)/` to `app/dashboard/` (route group issue)
+  - Configured Vercel environment variables (Supabase URL, anon key, Base RPC)
+  - Fixed typo in Supabase anon key (`E2Q` → `E6Q`)
+  - Verified production landing and login pages working
+  - Attempted to seed lessons data - discovered RLS policy issue
+
+**Issues Discovered:**
+1. **Supabase RLS Policy Issue** - Lessons table has data (INSERT fails with duplicate key) but SELECT returns empty. The "Anyone can view lessons" policy may not be applied correctly.
+2. **Next.js Security Warning** - Version 14.2.28 has a security vulnerability. Upgrading to 15.x/16.x requires migration work (Turbopack, middleware changes).
+3. **AI Features Postponed** - Require Anthropic API key (separate billing from Claude Max subscription)
+
+**Files Modified:**
+- `app/dashboard/layout.tsx` - Moved from route group
+- `app/dashboard/page.tsx` - Moved from route group
+- `.env.local` - Fixed Supabase anon key typo
+- `package.json` - Updated dependencies
+
+**Commits:**
+- `fe95fe7` - Fix Vercel deployment by moving dashboard from route group
+- `707d5ee` - Update dependencies
+
 ---
 
-## Next Steps (In Plain English)
+## Next Steps (Detailed)
+
+### BLOCKING: Fix Supabase RLS Policy
+**Problem:** The lessons table has data but queries return empty due to Row Level Security.
+**Solution:** Run this in Supabase SQL Editor:
+```sql
+-- Check if policy exists
+SELECT * FROM pg_policies WHERE tablename = 'lessons';
+
+-- If missing, create the policy
+CREATE POLICY "Anyone can view lessons"
+  ON public.lessons FOR SELECT
+  USING (true);
+
+-- Verify lessons are readable
+SELECT COUNT(*) FROM lessons;
+```
+
+### Required: Run Migration on Production
+Run `supabase/migrations/003_add_contract_abi.sql` in Supabase SQL Editor to add:
+- `contract_abi` column to projects table
+- `generated_frontend` column to projects table
+
+### Required: Add Anthropic API Key (for AI features)
+1. Get API key from https://console.anthropic.com (new accounts get free credits)
+2. Add to Vercel: `vercel env add ANTHROPIC_API_KEY production`
+3. Redeploy: `vercel --prod`
+
+This enables:
+- AI tutor chat
+- AI project generator (onboarding)
+- AI frontend generator
+
+### Optional: Add Base Mainnet Support
+For real blockchain deployments (not testnet):
+1. Add `NEXT_PUBLIC_BASE_MAINNET_RPC` environment variable
+2. Update `lib/wagmi.ts` to include Base mainnet chain
+3. Add network selector UI in deploy flow
+4. **Warning:** Real ETH costs money - add confirmation dialogs
+
+### Optional: Upgrade Next.js
+Current: 14.2.28 (has security vulnerability)
+Target: 15.x (stable) or wait for 14.x patch
+
+Migration required:
+- Update `middleware.ts` (deprecated middleware convention)
+- May need Turbopack config if using webpack customizations
+- Test thoroughly before deploying
+
+---
+
+## Quick Reference
+
+**Production URL:** https://crypto-coding-app.vercel.app
+
+**Local Development:**
+```bash
+npm run dev          # Start dev server
+npm run test         # Run Playwright tests
+npm run build        # Production build
+```
+
+**Deployment:**
+```bash
+git push             # Auto-deploys via GitHub integration
+vercel --prod        # Manual deploy
+vercel env ls        # List environment variables
+```
+
+**Supabase:**
+- Dashboard: https://supabase.com/dashboard
+- Project ref: `kgtqycqllffknhuibyjs`
+
+---
+
+## Previous Next Steps (In Plain English)
 
 ### Step 1: Set Up the Database (Required to run the app)
 **What:** Supabase is a free service that stores all user accounts, projects, and lesson progress.
