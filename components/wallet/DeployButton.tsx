@@ -102,8 +102,8 @@ export function DeployButton({
         setDeployedAddress(receipt.contractAddress);
         setStatus('success');
 
-        // Save to database
-        await saveDeployment(receipt.contractAddress, hash);
+        // Save to database including ABI for frontend generation
+        await saveDeployment(receipt.contractAddress, hash, abi);
         onDeploySuccess(receipt.contractAddress, hash);
       } else {
         setStatus('error');
@@ -119,7 +119,7 @@ export function DeployButton({
     }
   };
 
-  const saveDeployment = async (contractAddress: string, transactionHash: string) => {
+  const saveDeployment = async (contractAddress: string, transactionHash: string, abi: any[]) => {
     try {
       await supabase
         .from('projects')
@@ -128,6 +128,7 @@ export function DeployButton({
           network: 'base-sepolia',
           status: 'deployed',
           deployed_at: new Date().toISOString(),
+          contract_abi: abi,
         })
         .eq('id', projectId);
     } catch (err) {

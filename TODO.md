@@ -55,8 +55,10 @@
   - Physical item claims (merch/prints), bundles & tiers
 
 ## Phase 5: Frontend Builder
-- [ ] AI-generated React components for contracts
-- [ ] No-code frontend builder
+- [x] AI-generated React components for contracts
+- [x] Store contract ABI for frontend generation
+- [x] FrontendGenerator component with preview/download
+- [ ] No-code frontend builder (visual editor)
 - [ ] Preview deployed frontend
 - [ ] Custom domain support
 
@@ -185,6 +187,50 @@
 - `components/providers.tsx` - Added ErrorBoundary wrapper
 - `components/ErrorBoundary.tsx` - New component
 - `CLAUDE_DESKTOP_SETUP.md` - New file with browser setup instructions
+
+### Session 4 (2026-01-15)
+**Completed:**
+- Set up local PostgreSQL database for development
+  - Created `supabase/local-dev-setup.sql` (mocks Supabase auth for local dev)
+  - All tables, policies, and 60 lessons seeded in local `crypto_coding_app` database
+  - Test user created for development
+- Set up Playwright testing framework
+  - Installed @playwright/test
+  - Created `playwright.config.ts` with auto-server startup
+  - Added `tests/landing.spec.ts` - 6 tests for landing page
+  - Added `tests/auth.spec.ts` - 8 tests for login/signup pages
+  - All 14 tests passing
+- **Phase 5: Frontend Builder (partial)**
+  - Added `contract_abi` and `generated_frontend` columns to projects table
+  - Updated `DeployButton.tsx` to save ABI on deployment
+  - Created `app/api/generate-frontend/route.ts` - AI endpoint that generates React components from contract ABI
+  - Created `components/wallet/FrontendGenerator.tsx` - Modal UI for generating, previewing, copying, and downloading frontend code
+  - Added `components/ui/dialog.tsx` and `components/ui/scroll-area.tsx` UI components
+  - Integrated FrontendGenerator into ProjectIDE toolbar
+  - Updated types to include 'creator' project type
+- Build passing, all tests passing
+
+**MCP Integration:**
+- Postgres MCP server: `postgresql://postgres:postgres@localhost:5432/crypto_coding_app`
+- Playwright MCP server available for browser automation
+- Memory MCP server available for persistent storage
+
+**New Files:**
+- `supabase/local-dev-setup.sql` - Local PostgreSQL auth mock
+- `supabase/migrations/003_add_contract_abi.sql` - ABI storage migration
+- `app/api/generate-frontend/route.ts` - AI frontend generator endpoint
+- `components/wallet/FrontendGenerator.tsx` - Frontend generation UI
+- `components/ui/dialog.tsx` - Dialog component
+- `components/ui/scroll-area.tsx` - ScrollArea component
+- `playwright.config.ts` - Playwright configuration
+- `tests/landing.spec.ts` - Landing page tests
+- `tests/auth.spec.ts` - Auth page tests
+
+**Modified Files:**
+- `components/wallet/DeployButton.tsx` - Save ABI on deployment
+- `components/editor/ProjectIDE.tsx` - Added FrontendGenerator, track ABI state
+- `types/index.ts` - Added creator type, contract_abi/generated_frontend fields
+- `package.json` - Added test scripts, @playwright/test dependency
 
 ---
 

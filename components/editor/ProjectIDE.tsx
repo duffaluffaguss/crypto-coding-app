@@ -8,6 +8,7 @@ import { LessonSidebar } from '@/components/lessons/LessonSidebar';
 import { ConnectButton } from '@/components/wallet/ConnectButton';
 import { DeployButton } from '@/components/wallet/DeployButton';
 import { ContractInteraction } from '@/components/wallet/ContractInteraction';
+import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -38,6 +39,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [showChat, setShowChat] = useState(true);
   const [deployedContract, setDeployedContract] = useState<string | null>(project.contract_address);
+  const [contractAbi, setContractAbi] = useState<any[] | null>(project.contract_abi);
   const supabase = createClient();
 
   // Initialize with template if no files exist
@@ -416,27 +418,40 @@ contract ${contractName} {
               onCompile={compileCode}
               onDeploySuccess={(address, txHash) => {
                 setDeployedContract(address);
+                // Update the ABI state from compilation result
+                if (compilationResult?.abi) {
+                  setContractAbi(compilationResult.abi);
+                }
               }}
             />
             {deployedContract && (
-              <Link href={`/share/${project.id}`} target="_blank">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                    />
-                  </svg>
-                  Share
-                </Button>
-              </Link>
+              <>
+                <Link href={`/share/${project.id}`} target="_blank">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                      />
+                    </svg>
+                    Share
+                  </Button>
+                </Link>
+                <FrontendGenerator
+                  projectId={project.id}
+                  projectName={project.name}
+                  contractAddress={deployedContract}
+                  contractAbi={contractAbi}
+                  network={project.network}
+                />
+              </>
             )}
             <div className="w-px h-6 bg-border mx-1" />
             <Button

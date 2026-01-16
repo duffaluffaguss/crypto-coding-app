@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.56",
@@ -41,6 +44,7 @@
     "wagmi": "^2.14.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/node": "^22.10.5",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",

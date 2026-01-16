@@ -1,7 +1,7 @@
 // User and Profile Types
 export type ExperienceLevel = 'complete_beginner' | 'some_coding' | 'web3_curious';
 
-export type ProjectType = 'nft_marketplace' | 'token' | 'dao' | 'game' | 'social';
+export type ProjectType = 'nft_marketplace' | 'token' | 'dao' | 'game' | 'social' | 'creator';
 
 export type ProjectStatus = 'draft' | 'learning' | 'deployed' | 'published';
 
@@ -32,6 +32,8 @@ export interface Project {
   deployed_at: string | null;
   contract_address: string | null;
   network: Network | null;
+  contract_abi: any[] | null;
+  generated_frontend: string | null;
 }
 
 export interface ProjectFile {
