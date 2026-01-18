@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   });
 
   const result = streamText({
-    model: google('gemini-1.5-flash'),
+    model: google('gemini-2.0-flash'),
     system: systemPrompt,
     messages,
   });

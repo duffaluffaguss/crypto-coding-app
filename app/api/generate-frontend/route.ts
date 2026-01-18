@@ -64,7 +64,7 @@ Return ONLY the React component code, no explanations. The code should:
 Generate the complete component now:`;
 
     const { text: generatedCode } = await generateText({
-      model: google('gemini-1.5-pro'),  // Using pro for complex code generation
+      model: google('gemini-2.0-flash'),  // Using 2.0 flash for code generation
       prompt,
     });
 

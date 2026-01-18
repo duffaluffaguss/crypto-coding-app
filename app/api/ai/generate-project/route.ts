@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 Generate 3 unique Web3 project ideas that combine these passions with blockchain technology.`;
 
     const { text } = await generateText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-2.0-flash'),
       system: PROJECT_GENERATOR_PROMPT,
       prompt: userMessage,
     });
