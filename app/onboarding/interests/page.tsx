@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { INTERESTS, type InterestId } from '@/types';
 import {
@@ -17,6 +18,7 @@ import {
   Plane,
   Dumbbell,
   Cpu,
+  ArrowLeft,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -99,7 +101,17 @@ export default function InterestsPage() {
         })}
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-4">
+        <Button
+          variant="outline"
+          size="lg"
+          asChild
+        >
+          <Link href="/">
+            <ArrowLeft className="mr-2 w-4 h-4" />
+            Back
+          </Link>
+        </Button>
         <Button
           size="lg"
           onClick={handleContinue}

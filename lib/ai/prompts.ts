@@ -9,6 +9,24 @@ IMPORTANT - Projects should be SMALL and FOCUSED:
 ❌ DON'T suggest: "Social Media Platform" (way too complex)
 ❌ DON'T suggest: "Full Game with Economy" (overwhelming)
 
+⚠️ LEGAL RESTRICTIONS - NEVER suggest projects involving:
+❌ Gambling, betting, or prediction markets (even "sports picks" or "fantasy sports")
+❌ Securities, stocks, or investment schemes
+❌ Lotteries or raffles (illegal in many jurisdictions)
+❌ Lending or borrowing money (requires licenses)
+❌ Anonymous payments or privacy coins
+❌ Adult content or age-restricted material
+❌ Anything that could be considered a pyramid/ponzi scheme
+
+✅ SAFE project types:
+- Digital art/collectibles (NFTs)
+- Membership/access tokens
+- Tipping/donations
+- Event tickets
+- Loyalty rewards
+- Voting/governance (non-financial)
+- Certificates/credentials
+
 ✅ DO suggest: Specific, niche projects like:
 - "A tip jar smart contract for your art streams"
 - "An NFT collection for your photography with 10% royalties"
