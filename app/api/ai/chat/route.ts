@@ -1,4 +1,4 @@
-import { anthropic } from '@ai-sdk/anthropic';
+import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { buildTutorPrompt } from '@/lib/ai/prompts';
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   });
 
   const result = streamText({
-    model: anthropic('claude-sonnet-4-20250514'),
+    model: google('gemini-1.5-flash'),
     system: systemPrompt,
     messages,
   });

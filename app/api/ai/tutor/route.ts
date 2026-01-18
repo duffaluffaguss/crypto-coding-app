@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
 import { buildTutorPrompt } from '@/lib/ai/prompts';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 export async function POST(request: Request) {
   try {
@@ -25,24 +22,13 @@ export async function POST(request: Request) {
       currentCode: context?.currentCode || '// No code yet',
     });
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
+    const { text } = await generateText({
+      model: google('gemini-1.5-flash'),
       system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: message,
-        },
-      ],
+      prompt: message,
     });
 
-    const textContent = response.content.find((block) => block.type === 'text');
-    if (!textContent || textContent.type !== 'text') {
-      throw new Error('No text content in response');
-    }
-
-    return NextResponse.json({ response: textContent.text });
+    return NextResponse.json({ response: text });
   } catch (error) {
     console.error('Error in tutor chat:', error);
     return NextResponse.json(

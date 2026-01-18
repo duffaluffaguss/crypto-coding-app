@@ -56,7 +56,14 @@
       "Bash(vercel link:*)",
       "Bash(vercel env:*)",
       "Bash(vercel --prod:*)",
-      "Bash(vercel ls:*)"
+      "Bash(vercel ls:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(vercel domains:*)",
+      "Bash(supabase:*)",
+      "Bash(scoop --version:*)",
+      "Bash(scoop install:*)",
+      "Bash(clip:*)",
+      "Bash(echo:*)"
     ]
   }
 }
