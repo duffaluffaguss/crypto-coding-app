@@ -368,7 +368,7 @@ contract ${contractName} {
   return (
     <div className="h-[calc(100vh-3.5rem)] flex">
       {/* File Explorer & Lessons */}
-      <div className="w-64 border-r border-border bg-card flex flex-col">
+      <div className="w-80 border-r border-border bg-card flex flex-col">
         {/* File Explorer */}
         <div className="p-3 border-b border-border">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
