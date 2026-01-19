@@ -106,7 +106,10 @@ export default async function DashboardPage() {
               </Card>
             </Link>
               {/* Delete button - shows on hover */}
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <div 
+                className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <DeleteProjectButton projectId={project.id} projectName={project.name} />
               </div>
             </div>

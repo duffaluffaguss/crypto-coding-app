@@ -58,7 +58,10 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-          onClick={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         >
           <svg
             className="w-4 h-4"
