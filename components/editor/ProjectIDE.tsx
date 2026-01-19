@@ -426,18 +426,32 @@ contract ${contractName} {
       {/* Main Editor Area */}
       <div className="flex-1 flex flex-col">
         {/* Toolbar */}
-        <div className="h-12 border-b border-border bg-card flex items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{project.name}</span>
-            {activeFile && (
-              <span className="text-sm text-muted-foreground">
-                / {activeFile.filename}
-              </span>
-            )}
+        <div className="h-14 border-b border-border bg-card flex items-center justify-between px-4">
+          {/* Left: Home + Project Name */}
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Home
+              </Button>
+            </Link>
+            <div className="h-6 w-px bg-border" />
+            <div>
+              <span className="text-sm font-medium">{project.name}</span>
+              {activeFile && (
+                <span className="text-xs text-muted-foreground ml-2">
+                  {activeFile.filename}
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            {/* Save Status Indicator */}
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mr-1">
+            {/* Save Status */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               {saveStatus === 'saving' && (
                 <>
                   <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -596,9 +610,15 @@ contract ${contractName} {
               />
             </div>
 
-            {/* Compilation Output */}
+            {/* Compilation Output / Terminal */}
             {compilationResult && (
-              <div className="border-t border-border bg-card p-4 max-h-48 overflow-auto custom-scrollbar">
+              <div className="border-t border-border bg-card">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Terminal Output
+                  </span>
+                </div>
+                <div className="p-4 max-h-48 overflow-y-auto custom-scrollbar">
                 {compilationResult.success ? (
                   <div className="flex items-center gap-2 text-green-500">
                     <svg
@@ -658,6 +678,7 @@ contract ${contractName} {
                     ))}
                   </div>
                 )}
+                </div>
               </div>
             )}
 

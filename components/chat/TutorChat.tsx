@@ -220,11 +220,13 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
               }`}
             >
               {message.role === 'assistant' ? (
-                <div className="prose prose-sm dark:prose-invert">
+                <div className="prose prose-sm dark:prose-invert max-h-60 overflow-y-auto custom-scrollbar">
                   {formatMessage(message.content)}
                 </div>
               ) : (
-                message.content
+                <div className="max-h-40 overflow-y-auto custom-scrollbar">
+                  {message.content}
+                </div>
               )}
             </div>
           </div>

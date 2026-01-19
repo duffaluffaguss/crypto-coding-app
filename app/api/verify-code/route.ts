@@ -50,6 +50,40 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if code has meaningful content (not just template)
+    const codeWithoutComments = sourceCode
+      .replace(/\/\/.*$/gm, '') // Remove single-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+
+    // Count actual functions/code beyond basic structure
+    const hasFunctions = /function\s+\w+\s*\([^)]*\)\s*(public|private|internal|external|view|pure|payable|\s)*\{/.test(sourceCode);
+    const hasStateVariables = /^\s*(uint|int|string|address|bool|bytes|mapping)\d*\s+(public|private|internal)?\s*\w+/m.test(sourceCode);
+    const hasTodoComments = /\/\/\s*TODO/i.test(sourceCode);
+    const lineCount = sourceCode.split('\n').filter((line: string) => line.trim() && !line.trim().startsWith('//')).length;
+
+    // Reject if code is too minimal or still has TODO comments
+    if (lineCount < 10) {
+      return NextResponse.json({
+        success: false,
+        compiled: false,
+        errors: [{
+          message: '📝 Your code looks a bit short! Make sure you\'ve completed the lesson requirements before verifying. Check the lesson instructions for what to add.',
+        }],
+      });
+    }
+
+    if (hasTodoComments && !hasFunctions) {
+      return NextResponse.json({
+        success: false,
+        compiled: false,
+        errors: [{
+          message: '🚧 Looks like there are still TODO comments in your code. Complete the TODO items before verifying!',
+        }],
+      });
+    }
+
     // First, compile the code to make sure it's valid
     const solc = await import('solc');
 
