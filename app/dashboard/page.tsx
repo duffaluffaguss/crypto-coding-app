@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { LearnModal } from '@/components/learn/LearnModal';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ProjectCard } from '@/components/dashboard/ProjectCard';
+import { ConnectButton } from '@/components/wallet/ConnectButton';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -26,8 +27,9 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ThemeToggle />
+          <ConnectButton />
           <LearnModal />
+          <ThemeToggle />
           <Link href="/onboarding/interests">
             <Button>
               <svg

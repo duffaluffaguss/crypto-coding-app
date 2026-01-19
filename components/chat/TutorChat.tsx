@@ -213,18 +213,18 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
             }`}
           >
             <div
-              className={`max-w-[90%] rounded-lg px-3 py-2 text-sm ${
+              className={`max-w-[95%] rounded-lg px-4 py-3 ${
                 message.role === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted'
               }`}
             >
               {message.role === 'assistant' ? (
-                <div className="prose prose-sm dark:prose-invert max-h-60 overflow-y-auto custom-scrollbar">
+                <div className="prose prose-sm dark:prose-invert max-h-96 overflow-y-auto custom-scrollbar text-sm leading-relaxed">
                   {formatMessage(message.content)}
                 </div>
               ) : (
-                <div className="max-h-40 overflow-y-auto custom-scrollbar">
+                <div className="max-h-48 overflow-y-auto custom-scrollbar text-sm">
                   {message.content}
                 </div>
               )}
@@ -267,16 +267,16 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
             }}
             placeholder="Ask Sol anything... (Shift+Enter for new line)"
             disabled={isLoading}
-            rows={1}
-            className="flex-1 min-h-[38px] max-h-32 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
+            rows={2}
+            className="flex-1 min-h-[60px] max-h-40 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
             style={{
               height: 'auto',
-              minHeight: '38px',
+              minHeight: '60px',
             }}
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement;
               target.style.height = 'auto';
-              target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+              target.style.height = Math.min(target.scrollHeight, 160) + 'px';
             }}
           />
           <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="shrink-0">

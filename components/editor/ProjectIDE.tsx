@@ -5,12 +5,9 @@ import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { TutorChat } from '@/components/chat/TutorChat';
 import { LessonSidebar } from '@/components/lessons/LessonSidebar';
-import { ConnectButton } from '@/components/wallet/ConnectButton';
 import { DeployButton } from '@/components/wallet/DeployButton';
 import { ContractInteraction } from '@/components/wallet/ContractInteraction';
 import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
-import { LearnButton } from '@/components/learn/LearnModal';
-import { TestTokensPrompt, WalletBalance } from '@/components/wallet/TestTokensPrompt';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ExportButton } from '@/components/editor/ExportButton';
 import { createClient } from '@/lib/supabase/client';
@@ -508,10 +505,6 @@ contract ${contractName} {
               )}
             </Button>
             <div className="w-px h-6 bg-border mx-1" />
-            <div className="flex items-center gap-2">
-              <ConnectButton />
-              <WalletBalance />
-            </div>
             <DeployButton
               projectId={project.id}
               code={code}
@@ -562,7 +555,6 @@ contract ${contractName} {
               </>
             )}
             <div className="w-px h-6 bg-border mx-1" />
-            <LearnButton />
             <ThemeToggle />
             <div className="w-px h-6 bg-border mx-1" />
             <Button
@@ -703,9 +695,6 @@ contract ${contractName} {
           )}
         </div>
       </div>
-
-      {/* Test Tokens Prompt - shows when wallet has low balance */}
-      <TestTokensPrompt />
     </div>
   );
 }
