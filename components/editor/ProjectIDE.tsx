@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { TutorChat } from '@/components/chat/TutorChat';
@@ -9,6 +9,7 @@ import { ConnectButton } from '@/components/wallet/ConnectButton';
 import { DeployButton } from '@/components/wallet/DeployButton';
 import { ContractInteraction } from '@/components/wallet/ContractInteraction';
 import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
+import { LearnButton } from '@/components/learn/LearnModal';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -40,7 +41,61 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [showChat, setShowChat] = useState(true);
   const [deployedContract, setDeployedContract] = useState<string | null>(project.contract_address);
   const [contractAbi, setContractAbi] = useState<any[] | null>(project.contract_abi);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const supabase = createClient();
+
+  // Auto-save functionality - saves 2 seconds after user stops typing
+  const autoSave = useCallback(async () => {
+    if (!activeFile || saveStatus === 'saving') return;
+    
+    setSaveStatus('saving');
+    try {
+      await supabase
+        .from('project_files')
+        .update({ content: code })
+        .eq('id', activeFile.id);
+
+      setFiles((prev) =>
+        prev.map((f) => (f.id === activeFile.id ? { ...f, content: code } : f))
+      );
+      setSaveStatus('saved');
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+      setSaveStatus('unsaved');
+    }
+  }, [activeFile, code, saveStatus, supabase]);
+
+  // Trigger auto-save when code changes
+  useEffect(() => {
+    if (!activeFile) return;
+    
+    // Mark as unsaved when code differs from saved version
+    const savedContent = files.find(f => f.id === activeFile.id)?.content;
+    if (code !== savedContent) {
+      setSaveStatus('unsaved');
+    }
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Set new timer for auto-save (2 seconds after last change)
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (code !== savedContent) {
+        autoSave();
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [code, activeFile, files, autoSave]);
 
   // Initialize with template if no files exist
   useEffect(() => {
@@ -378,7 +433,33 @@ contract ${contractName} {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={saveFile}>
+            {/* Save Status Indicator */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mr-1">
+              {saveStatus === 'saving' && (
+                <>
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>Saving...</span>
+                </>
+              )}
+              {saveStatus === 'saved' && (
+                <>
+                  <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Saved</span>
+                </>
+              )}
+              {saveStatus === 'unsaved' && (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                  <span>Unsaved</span>
+                </>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={autoSave} disabled={saveStatus === 'saving' || saveStatus === 'saved'}>
               Save
             </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling}>
@@ -454,6 +535,8 @@ contract ${contractName} {
                 />
               </>
             )}
+            <div className="w-px h-6 bg-border mx-1" />
+            <LearnButton />
             <div className="w-px h-6 bg-border mx-1" />
             <Button
               variant="ghost"

@@ -2,7 +2,7 @@
 
 > This file tracks current progress and next steps. Updated after each feature/fix.
 
-## Last Updated: 2026-01-19
+## Last Updated: 2026-01-19 (Session 2)
 
 ---
 
@@ -34,40 +34,45 @@
 - ✅ Back buttons on pages  
 - ✅ Better project suggestions
 
+### Session 6 (2026-01-19)
+- ✅ Code Verification Feature (Verify & Continue flow)
+- ✅ Auto-save progress (saves 2 seconds after typing stops)
+- ✅ Save status indicator in toolbar (Saved/Saving/Unsaved)
+- ✅ "Learn Crypto" educational modal with 4 tabs:
+  - Welcome to the Future of Building
+  - Blockchain in 60 Seconds
+  - The Story So Far (history)
+  - What You Can Build (possibilities)
+- ✅ Learn button added to IDE toolbar and Dashboard
+
 ---
 
-## 🚧 In Progress: Code Verification Feature
+## ✅ Recently Completed
 
-### Goal
-Ensure users actually build what the lesson teaches before they can proceed.
-
-### Flow
-1. User writes code for current lesson
-2. Click "Verify & Continue" → compiles the code
-3. If it compiles → AI summarizes what was built
-4. User confirms "Yes, this is what I want"
-5. Only then can they proceed to next lesson
-
-### Components Completed ✅
-- [x] `/api/verify-code/route.ts` - Compiles code + AI summarizes what was built
+### Code Verification Feature
+- [x] `/api/verify-code/route.ts` - Compiles code + AI summarizes
 - [x] `VerificationModal.tsx` - Shows summary + "Yes, Continue" confirmation
-- [x] `VerificationErrorModal.tsx` - Shows compile errors with "Back to Editor"
-- [x] Updated `LessonSidebar.tsx` - "Verify & Continue" button replaces "Mark Complete"
-- [x] Updated `ProjectIDE.tsx` - Passes `currentCode` prop to LessonSidebar
-- [x] Build passing ✅
+- [x] `VerificationErrorModal.tsx` - Shows compile errors
+- [x] `LessonSidebar.tsx` - "Verify & Continue" button
+- [x] `ProjectIDE.tsx` - Passes `currentCode` prop
 
-### Still To Do
-- [ ] Test the full verification flow locally
-- [ ] Consider: Should lessons be "locked" until verified? (currently they can still be clicked)
-- [ ] Consider: Add visual indicator that code needs verification before proceeding
+### Auto-Save Progress
+- [x] Code auto-saves 2 seconds after user stops typing
+- [x] Save status indicator in toolbar (Saved/Saving/Unsaved with icons)
+- [x] Uses debounced save with useCallback/useRef
 
-### Files Modified This Session
-- `components/lessons/LessonSidebar.tsx` - Verification flow integration
-- `components/editor/ProjectIDE.tsx` - Added currentCode prop
+### Learn Crypto Educational Content
+- [x] `LearnModal.tsx` - 4-tab educational modal
+- [x] Welcome tab - Exciting intro to building on blockchain
+- [x] Blockchain tab - Simple analogy explanation
+- [x] History tab - Bitcoin → Ethereum → Now timeline
+- [x] Possibilities tab - What creators/gamers/entrepreneurs can build
+- [x] Added to IDE toolbar and Dashboard page
 
-### Files Created This Session
-- `components/lessons/VerificationModal.tsx` - Success + Error modals
-- `app/api/verify-code/route.ts` - API endpoint
+## 🚧 Potential Enhancements
+- [ ] Lesson locking (prevent skipping without verification)
+- [ ] Visual badge for "needs verification"
+- [ ] Test full verification flow end-to-end
 
 ---
 

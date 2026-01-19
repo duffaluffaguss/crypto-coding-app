@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { LearnModal } from '@/components/learn/LearnModal';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -35,24 +36,27 @@ export default async function DashboardPage() {
             Build, learn, and deploy your Web3 creations
           </p>
         </div>
-        <Link href="/onboarding/interests">
-          <Button>
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            New Project
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <LearnModal />
+          <Link href="/onboarding/interests">
+            <Button>
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              New Project
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {projects && projects.length > 0 ? (
@@ -119,9 +123,12 @@ export default async function DashboardPage() {
             <p className="text-muted-foreground mb-6">
               Create your first Web3 project based on your interests
             </p>
-            <Link href="/onboarding/interests">
-              <Button>Create Your First Project</Button>
-            </Link>
+            <div className="flex items-center justify-center gap-3">
+              <LearnModal triggerClassName="gap-2" />
+              <Link href="/onboarding/interests">
+                <Button>Create Your First Project</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}
