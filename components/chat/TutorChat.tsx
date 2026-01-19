@@ -15,9 +15,13 @@ interface TutorChatProps {
 export function TutorChat({ project, currentLesson, currentCode }: TutorChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
-  const [hintLevel, setHintLevel] = useState(0);
+  const [hintCounts, setHintCounts] = useState<Record<string, number>>({});
   const [introducedLessons, setIntroducedLessons] = useState<Set<string>>(new Set());
   const [loadingIntro, setLoadingIntro] = useState(false);
+  const [hasHistory, setHasHistory] = useState<boolean | null>(null);
+
+  // Get current lesson's hint count
+  const currentHintCount = currentLesson ? (hintCounts[currentLesson.id] || 0) : 0;
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, append } = useChat({
     api: '/api/ai/chat',
@@ -30,13 +34,7 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
         currentCode,
       },
     },
-    initialMessages: [
-      {
-        id: 'welcome',
-        role: 'assistant',
-        content: `👋 Hey there! I'm **Sol**, your personal coding tutor!\n\nI'm here to guide you through building **${project.name}** step by step. I'll:\n\n🎓 **Explain concepts** in simple terms\n📖 **Define new terms** as we go\n✍️ **Help you fill in the code** with guidance\n💡 **Give hints** when you're stuck\n\nLet's make learning to code fun! When you're ready, I'll introduce your first lesson. Just say **"Let's start!"** or click the lesson on the left.`,
-      },
-    ],
+    initialMessages: [], // Start empty, we'll add welcome/welcome-back after checking history
     onFinish: async (message) => {
       // Persist assistant message to database
       try {
@@ -59,7 +57,10 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
   useEffect(() => {
     const loadChatHistory = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setHasHistory(false);
+        return;
+      }
 
       const { data: history } = await supabase
         .from('chat_messages')
@@ -69,12 +70,43 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
         .order('created_at', { ascending: true });
 
       if (history && history.length > 0) {
+        // Has history - load it and show "welcome back" message first
+        const welcomeBack = {
+          id: 'welcome-back',
+          role: 'assistant' as const,
+          content: `👋 **Welcome back!** Ready to continue building **${project.name}**?\n\nI remember where we left off. Click a lesson on the left to jump back in, or ask me anything!`,
+        };
+        
         const loadedMessages = history.map((msg, index) => ({
           id: msg.id || `msg-${index}`,
           role: msg.role as 'user' | 'assistant',
           content: msg.content,
         }));
-        setMessages(loadedMessages);
+        
+        // Put welcome back at the start, then history
+        setMessages([welcomeBack, ...loadedMessages]);
+        setHasHistory(true);
+        
+        // Count existing hint requests per lesson to restore hint levels
+        const hintPattern = /hint request #(\d+)/i;
+        const counts: Record<string, number> = {};
+        history.forEach((msg) => {
+          const match = msg.content.match(hintPattern);
+          if (match) {
+            // We can't easily know which lesson it was for, so we'll just track globally for now
+            // A better approach would be to store lesson_id with the message
+          }
+        });
+        setHintCounts(counts);
+      } else {
+        // No history - show first-time welcome (don't save to DB, it's just a greeting)
+        const welcome = {
+          id: 'welcome',
+          role: 'assistant' as const,
+          content: `👋 Hey there! I'm **Sol**, your personal coding tutor!\n\nI'm here to guide you through building **${project.name}** step by step. I'll:\n\n🎓 **Explain concepts** in simple terms\n📖 **Define new terms** as we go\n✍️ **Help you fill in the code** with guidance\n💡 **Give hints** when you're stuck\n\nLet's make learning to code fun! When you're ready, I'll introduce your first lesson. Just say **"Let's start!"** or click the lesson on the left.`,
+        };
+        setMessages([welcome]);
+        setHasHistory(false);
       }
     };
 
@@ -169,17 +201,43 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
     handleSubmit(e);
   };
 
-  // Request a hint
+  // Request a hint - progressively more helpful
   const requestHint = async () => {
-    const newHintLevel = Math.min(hintLevel + 1, 3);
-    setHintLevel(newHintLevel);
+    const lessonId = currentLesson?.id || 'default';
+    const currentCount = hintCounts[lessonId] || 0;
+    const newHintLevel = currentCount + 1;
+    
+    // Update hint count for this lesson
+    setHintCounts(prev => ({
+      ...prev,
+      [lessonId]: newHintLevel,
+    }));
 
-    const hintRequest = `I need a hint for this lesson. This is hint request #${newHintLevel}. My current goal is: ${currentLesson?.description || 'Build my smart contract'}. Please give me a ${newHintLevel === 1 ? 'gentle nudge in the right direction' : newHintLevel === 2 ? 'more specific hint' : 'very detailed hint without giving the full answer'}.`;
+    // Progressive hint levels with clear instructions for the AI
+    let hintInstruction: string;
+    let hintLabel: string;
+    
+    if (newHintLevel === 1) {
+      hintLabel = "LEVEL 1 - Gentle Nudge";
+      hintInstruction = "Give me a GENTLE NUDGE. Just point me in the right direction without being too specific. Maybe ask a guiding question or mention a concept I should think about.";
+    } else if (newHintLevel === 2) {
+      hintLabel = "LEVEL 2 - Specific Hint";
+      hintInstruction = "I need a MORE SPECIFIC HINT now. Tell me exactly what part of the code I should focus on, what function or line to look at, and what concept applies here.";
+    } else if (newHintLevel === 3) {
+      hintLabel = "LEVEL 3 - Detailed Walkthrough";
+      hintInstruction = "I really need a DETAILED WALKTHROUGH. Show me the structure of what I need to write, explain each part step by step, and give me code with blanks (___) that I fill in.";
+    } else {
+      hintLabel = `LEVEL ${newHintLevel} - Almost the Answer`;
+      hintInstruction = "I'm really stuck! Give me almost the complete answer with just ONE small thing left for me to figure out. Show me most of the code and explain exactly what it does.";
+    }
 
-    // Simulate form submission with hint request
-    const fakeEvent = {
-      preventDefault: () => {},
-    } as React.FormEvent<HTMLFormElement>;
+    const hintRequest = `🆘 **${hintLabel}** (hint #${newHintLevel} for this lesson)
+
+My current goal: ${currentLesson?.description || 'Build my smart contract'}
+
+${hintInstruction}
+
+IMPORTANT: This is hint #${newHintLevel}. Each hint should be MORE helpful and MORE specific than the last. Don't repeat the same advice - escalate your help!`;
 
     // Save hint request
     try {
@@ -244,8 +302,9 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
             onClick={requestHint}
             disabled={isLoading || loadingIntro}
             className="text-xs flex-1"
+            title={currentHintCount > 0 ? `Click for hint level ${currentHintCount + 1}` : 'Get a hint'}
           >
-            💡 Hint
+            💡 {currentHintCount > 0 ? `Hint (${currentHintCount})` : 'Hint'}
           </Button>
           <Button
             variant="outline"
