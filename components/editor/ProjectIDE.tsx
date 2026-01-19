@@ -366,9 +366,9 @@ contract ${contractName} {
   };
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex">
+    <div className="h-screen flex overflow-hidden">
       {/* File Explorer & Lessons */}
-      <div className="w-80 border-r border-border bg-card flex flex-col">
+      <div className="w-80 border-r border-border bg-card flex flex-col overflow-hidden">
         {/* File Explorer */}
         <div className="p-3 border-b border-border">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -421,7 +421,7 @@ contract ${contractName} {
       </div>
 
       {/* Main Editor Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}
         <div className="h-14 border-b border-border bg-card flex items-center justify-between px-4">
           {/* Left: Home + Project Name */}
@@ -580,9 +580,9 @@ contract ${contractName} {
         </div>
 
         {/* Editor + Chat */}
-        <div className="flex-1 flex">
+        <div className="flex-1 flex overflow-hidden">
           {/* Code Editor */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1">
               <MonacoEditor
                 height="100%"
