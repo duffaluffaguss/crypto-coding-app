@@ -10,6 +10,7 @@ import { DeployButton } from '@/components/wallet/DeployButton';
 import { ContractInteraction } from '@/components/wallet/ContractInteraction';
 import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { LearnButton } from '@/components/learn/LearnModal';
+import { TestTokensPrompt, WalletBalance } from '@/components/wallet/TestTokensPrompt';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -491,7 +492,10 @@ contract ${contractName} {
               )}
             </Button>
             <div className="w-px h-6 bg-border mx-1" />
-            <ConnectButton />
+            <div className="flex items-center gap-2">
+              <ConnectButton />
+              <WalletBalance />
+            </div>
             <DeployButton
               projectId={project.id}
               code={code}
@@ -669,6 +673,9 @@ contract ${contractName} {
           )}
         </div>
       </div>
+
+      {/* Test Tokens Prompt - shows when wallet has low balance */}
+      <TestTokensPrompt />
     </div>
   );
 }

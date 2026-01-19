@@ -97,16 +97,21 @@
 - [x] Stores wallet address in `user_profiles` table
 - [x] Database migration: `004_user_wallets.sql`
 
+### Session 6 Continued
+- ✅ **Lesson Locking**: Lessons locked until previous lesson is verified
+- ✅ **"Verify" Badge**: Yellow badge on current lesson needing verification
+- ✅ **"Verify to unlock next" indicator**: Shows in Current Goal section
+- ✅ **Test Tokens Prompt**: Auto-shows when wallet has low balance
+- ✅ **Wallet Balance Display**: Shows ETH balance in toolbar with low balance warning
+- ✅ **Faucet Links**: Direct links to Coinbase, Alchemy, QuickNode faucets
+
 ## 🚧 Setup Required (One-Time)
 - [ ] **Google OAuth**: Enable in Supabase Dashboard → Authentication → Providers → Google
 - [ ] **Run migration**: Execute `supabase/migrations/004_user_wallets.sql` in SQL Editor
 - [ ] **Vercel**: Redeploy after pushing to update production
 
 ## 🚧 Potential Enhancements
-- [ ] Lesson locking (prevent skipping without verification)
-- [ ] Visual badge for "needs verification"
 - [ ] Test full verification flow end-to-end
-- [ ] Auto-request test tokens from faucet on first wallet connect
 
 ---
 

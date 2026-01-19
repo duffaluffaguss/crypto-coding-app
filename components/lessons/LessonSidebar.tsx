@@ -34,10 +34,33 @@ export function LessonSidebar({
   const [verificationErrors, setVerificationErrors] = useState<Array<{ message: string }>>([]);
   const supabase = createClient();
 
-  const getProgressStatus = (lessonId: string) => {
+  // Determine if a lesson is locked based on previous lesson completion
+  const isLessonLocked = (lessonIndex: number): boolean => {
+    // First lesson is never locked
+    if (lessonIndex === 0) return false;
+    
+    // Check if previous lesson is completed
+    const previousLesson = lessons[lessonIndex - 1];
+    if (!previousLesson) return false;
+    
+    const previousProgress = localProgress.find((p) => p.lesson_id === previousLesson.id);
+    return previousProgress?.status !== 'completed';
+  };
+
+  const getProgressStatus = (lessonId: string, lessonIndex: number) => {
+    // First check if locked based on previous lessons
+    if (isLessonLocked(lessonIndex)) {
+      return 'locked';
+    }
+    
     const lessonProgress = localProgress.find((p) => p.lesson_id === lessonId);
     return lessonProgress?.status || 'available';
   };
+
+  // Check if current lesson needs verification (not completed yet)
+  const needsVerification = currentLesson 
+    ? getProgressStatus(currentLesson.id, lessons.findIndex(l => l.id === currentLesson.id)) !== 'completed'
+    : false;
 
   const completedCount = localProgress.filter((p) => p.status === 'completed').length;
   const progressPercentage = lessons.length > 0
@@ -252,10 +275,11 @@ export function LessonSidebar({
         </h3>
         <div className="space-y-1">
           {lessons.map((lesson, index) => {
-            const status = getProgressStatus(lesson.id);
+            const status = getProgressStatus(lesson.id, index);
             const isLocked = status === 'locked';
             const isActive = currentLesson?.id === lesson.id;
             const isCompleted = status === 'completed';
+            const isCurrentAndNeedsVerification = isActive && !isCompleted;
 
             return (
               <button
@@ -272,8 +296,15 @@ export function LessonSidebar({
                 <div className="flex items-start gap-2">
                   <div className="mt-0.5">{getStatusIcon(status)}</div>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-medium truncate ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
-                      {index + 1}. {lesson.title}
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-medium truncate ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                        {index + 1}. {lesson.title}
+                      </span>
+                      {isCurrentAndNeedsVerification && (
+                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 rounded font-medium">
+                          Verify
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                       {lesson.description}
@@ -309,14 +340,24 @@ export function LessonSidebar({
       {/* Current Lesson Goal + Complete Button */}
       {currentLesson && (
         <div className="p-3 border-t border-border mt-auto">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Current Goal
-          </h4>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Current Goal
+            </h4>
+            {needsVerification && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 rounded font-medium flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Verify to unlock next
+              </span>
+            )}
+          </div>
           <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 mb-3">
             <p className="text-sm">{currentLesson.description}</p>
           </div>
 
-          {getProgressStatus(currentLesson.id) !== 'completed' && (
+          {needsVerification && (
             <Button
               onClick={verifyAndContinue}
               disabled={verifying || completing || !currentCode.trim()}
@@ -390,7 +431,7 @@ export function LessonSidebar({
             </Button>
           )}
 
-          {getProgressStatus(currentLesson.id) === 'completed' && (
+          {!needsVerification && (
             <div className="flex items-center justify-center gap-2 text-sm text-green-500">
               <svg
                 className="w-4 h-4"
