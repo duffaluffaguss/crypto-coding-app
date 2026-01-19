@@ -109,6 +109,9 @@
   - AI endpoints: 30 req/min
   - Compile: 60 req/min
   - Returns 429 with retry-after header
+- ✅ **Export Project as Zip**: Download full Hardhat project
+  - Includes contracts, README, package.json, hardhat.config
+  - Deploy script + .env.example for easy setup
 
 ## 🚧 Setup Required (One-Time)
 - [ ] **Google OAuth**: Enable in Supabase Dashboard → Authentication → Providers → Google
@@ -137,10 +140,10 @@
 
 ### Nice to Have
 - [x] Dark mode toggle ✅
+- [x] Export project as zip ✅
 - [ ] Mobile responsive IDE
 - [ ] Code formatting (Prettier)
 - [ ] Git integration for projects
-- [ ] Export project as zip
 - [ ] Community showcase page
 
 ---

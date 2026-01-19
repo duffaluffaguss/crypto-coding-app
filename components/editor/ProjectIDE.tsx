@@ -12,6 +12,7 @@ import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { LearnButton } from '@/components/learn/LearnModal';
 import { TestTokensPrompt, WalletBalance } from '@/components/wallet/TestTokensPrompt';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ExportButton } from '@/components/editor/ExportButton';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -510,6 +511,12 @@ contract ${contractName} {
                   setContractAbi(compilationResult.abi);
                 }
               }}
+            />
+            <ExportButton
+              project={project}
+              files={files}
+              currentCode={code}
+              activeFileName={activeFile?.filename}
             />
             {deployedContract && (
               <>
