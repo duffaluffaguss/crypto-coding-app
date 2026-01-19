@@ -53,6 +53,13 @@
   - Ready to Connect!
 - ✅ User wallet address storage (saves to user_profiles table)
 - ✅ Database migration for user wallet data
+- ✅ AI Tutor input: Auto-expanding textarea with text wrap
+- ✅ Compilation output: Custom scrollbar styling
+- ✅ **Wallet Privacy (STRICT RLS)**:
+  - FORCE ROW LEVEL SECURITY enabled
+  - Users can ONLY access their own wallet data
+  - No anon/public access allowed
+  - Masked view for admin queries (shows only first 6 + last 4 chars)
 
 ---
 

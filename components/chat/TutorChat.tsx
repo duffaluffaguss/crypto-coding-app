@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useChat } from 'ai/react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
 import type { Project, Lesson } from '@/types';
 
@@ -252,15 +251,33 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
 
       {/* Input */}
       <form onSubmit={onSubmit} className="p-3 border-t border-border">
-        <div className="flex gap-2">
-          <Input
+        <div className="flex gap-2 items-end">
+          <textarea
             value={input}
             onChange={handleInputChange}
-            placeholder="Ask Sol anything..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (input.trim()) {
+                  onSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+                }
+              }
+            }}
+            placeholder="Ask Sol anything... (Shift+Enter for new line)"
             disabled={isLoading}
-            className="flex-1"
+            rows={1}
+            className="flex-1 min-h-[38px] max-h-32 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
+            style={{
+              height: 'auto',
+              minHeight: '38px',
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+            }}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="shrink-0">
             <svg
               className="w-4 h-4"
               fill="none"
@@ -276,6 +293,7 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
             </svg>
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-1">Press Enter to send, Shift+Enter for new line</p>
       </form>
     </div>
   );

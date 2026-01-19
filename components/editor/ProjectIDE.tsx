@@ -585,7 +585,7 @@ contract ${contractName} {
 
             {/* Compilation Output */}
             {compilationResult && (
-              <div className="border-t border-border bg-card p-4 max-h-48 overflow-auto">
+              <div className="border-t border-border bg-card p-4 max-h-48 overflow-auto custom-scrollbar">
                 {compilationResult.success ? (
                   <div className="flex items-center gap-2 text-green-500">
                     <svg
