@@ -361,6 +361,7 @@ contract ${contractName} {
           currentLesson={currentLesson}
           onSelectLesson={setCurrentLesson}
           projectId={project.id}
+          currentCode={code}
         />
       </div>
 

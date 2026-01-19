@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import { VerificationModal, VerificationErrorModal } from './VerificationModal';
 import type { Lesson, LearningProgress } from '@/types';
 
 interface LessonSidebarProps {
@@ -12,6 +13,7 @@ interface LessonSidebarProps {
   onSelectLesson: (lesson: Lesson) => void;
   projectId: string;
   onProgressUpdate?: (updatedProgress: LearningProgress[]) => void;
+  currentCode?: string; // Code from the editor for verification
 }
 
 export function LessonSidebar({
@@ -21,9 +23,15 @@ export function LessonSidebar({
   onSelectLesson,
   projectId,
   onProgressUpdate,
+  currentCode = '',
 }: LessonSidebarProps) {
   const [localProgress, setLocalProgress] = useState<LearningProgress[]>(progress);
   const [completing, setCompleting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [verificationSummary, setVerificationSummary] = useState('');
+  const [verificationErrors, setVerificationErrors] = useState<Array<{ message: string }>>([]);
   const supabase = createClient();
 
   const getProgressStatus = (lessonId: string) => {
@@ -118,6 +126,48 @@ export function LessonSidebar({
     } finally {
       setCompleting(false);
     }
+  };
+
+  const verifyAndContinue = async () => {
+    if (!currentLesson || verifying || !currentCode.trim()) return;
+    setVerifying(true);
+    setVerificationErrors([]);
+    setVerificationSummary('');
+
+    try {
+      const response = await fetch('/api/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceCode: currentCode,
+          lessonTitle: currentLesson.title,
+          lessonGoal: currentLesson.description,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.compiled) {
+        // Compilation failed - show error modal
+        setVerificationErrors(result.errors || [{ message: 'Compilation failed' }]);
+        setShowErrorModal(true);
+      } else {
+        // Compilation succeeded - show summary modal
+        setVerificationSummary(result.summary || 'Your code compiled successfully!');
+        setShowVerificationModal(true);
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      setVerificationErrors([{ message: 'Failed to verify code. Please try again.' }]);
+      setShowErrorModal(true);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleConfirmVerification = async () => {
+    setShowVerificationModal(false);
+    await markLessonComplete();
   };
 
   const getStatusIcon = (status: string) => {
@@ -268,12 +318,35 @@ export function LessonSidebar({
 
           {getProgressStatus(currentLesson.id) !== 'completed' && (
             <Button
-              onClick={markLessonComplete}
-              disabled={completing}
+              onClick={verifyAndContinue}
+              disabled={verifying || completing || !currentCode.trim()}
               className="w-full"
               size="sm"
             >
-              {completing ? (
+              {verifying ? (
+                <>
+                  <svg
+                    className="w-4 h-4 mr-2 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Verifying...
+                </>
+              ) : completing ? (
                 <>
                   <svg
                     className="w-4 h-4 mr-2 animate-spin"
@@ -308,10 +381,10 @@ export function LessonSidebar({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M5 13l4 4L19 7"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  Mark Lesson Complete
+                  Verify & Continue
                 </>
               )}
             </Button>
@@ -337,6 +410,22 @@ export function LessonSidebar({
           )}
         </div>
       )}
+
+      {/* Verification Modals */}
+      <VerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onConfirm={handleConfirmVerification}
+        summary={verificationSummary}
+        lessonTitle={currentLesson?.title || 'Current Lesson'}
+        isConfirming={completing}
+      />
+
+      <VerificationErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        errors={verificationErrors}
+      />
     </div>
   );
 }
