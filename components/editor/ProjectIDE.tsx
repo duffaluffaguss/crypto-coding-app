@@ -685,7 +685,7 @@ contract ${contractName} {
 
           {/* Tutor Chat */}
           {showChat && (
-            <div className="w-80 border-l border-border">
+            <div className="w-[480px] border-l border-border">
               <TutorChat
                 project={project}
                 currentLesson={currentLesson}
