@@ -1,10 +1,19 @@
 import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { buildTutorPrompt } from '@/lib/ai/prompts';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '@/lib/rate-limit';
 
 export const maxDuration = 30;
 
 export async function POST(request: Request) {
+  // Rate limit check
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`ai:${clientId}`, RATE_LIMITS.ai);
+  
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
+
   const { messages, context } = await request.json();
 
   const systemPrompt = buildTutorPrompt({

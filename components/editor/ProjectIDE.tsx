@@ -11,6 +11,7 @@ import { ContractInteraction } from '@/components/wallet/ContractInteraction';
 import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { LearnButton } from '@/components/learn/LearnModal';
 import { TestTokensPrompt, WalletBalance } from '@/components/wallet/TestTokensPrompt';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -541,6 +542,7 @@ contract ${contractName} {
             )}
             <div className="w-px h-6 bg-border mx-1" />
             <LearnButton />
+            <ThemeToggle />
             <div className="w-px h-6 bg-border mx-1" />
             <Button
               variant="ghost"

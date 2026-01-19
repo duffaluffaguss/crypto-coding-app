@@ -1,6 +1,7 @@
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { NextResponse } from 'next/server';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '@/lib/rate-limit';
 
 export const maxDuration = 30;
 
@@ -31,6 +32,14 @@ Example output format:
 You're making awesome progress! Ready for the next lesson?"`;
 
 export async function POST(request: Request) {
+  // Rate limit check
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`ai:${clientId}`, RATE_LIMITS.ai);
+  
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
+
   try {
     const { sourceCode, lessonTitle, lessonGoal } = await request.json();
 

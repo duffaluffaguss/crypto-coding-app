@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LearnModal } from '@/components/learn/LearnModal';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -37,6 +38,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <LearnModal />
           <Link href="/onboarding/interests">
             <Button>

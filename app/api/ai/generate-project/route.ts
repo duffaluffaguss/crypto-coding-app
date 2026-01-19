@@ -2,8 +2,17 @@ import { NextResponse } from 'next/server';
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { PROJECT_GENERATOR_PROMPT } from '@/lib/ai/prompts';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
+  // Rate limit check
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`ai:${clientId}`, RATE_LIMITS.ai);
+  
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
+
   try {
     const { interests } = await request.json();
 

@@ -104,6 +104,11 @@
 - ✅ **Test Tokens Prompt**: Auto-shows when wallet has low balance
 - ✅ **Wallet Balance Display**: Shows ETH balance in toolbar with low balance warning
 - ✅ **Faucet Links**: Direct links to Coinbase, Alchemy, QuickNode faucets
+- ✅ **Dark Mode Toggle**: Light/Dark/System theme options
+- ✅ **Rate Limiting**: All AI + compile endpoints protected
+  - AI endpoints: 30 req/min
+  - Compile: 60 req/min
+  - Returns 429 with retry-after header
 
 ## 🚧 Setup Required (One-Time)
 - [ ] **Google OAuth**: Enable in Supabase Dashboard → Authentication → Providers → Google
@@ -128,10 +133,10 @@
 - [ ] Add Base Mainnet option
 - [ ] Analytics/tracking
 - [ ] Error monitoring (Sentry)
-- [ ] Rate limiting for AI endpoints
+- [x] Rate limiting for AI endpoints ✅
 
 ### Nice to Have
-- [ ] Dark mode toggle
+- [x] Dark mode toggle ✅
 - [ ] Mobile responsive IDE
 - [ ] Code formatting (Prettier)
 - [ ] Git integration for projects

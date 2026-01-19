@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
+import { ThemeProvider } from 'next-themes';
 import { useState, type ReactNode } from 'react';
 import { config } from '@/lib/wallet/config';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -20,11 +21,18 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ErrorBoundary>
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
-      </WagmiProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="dark"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </WagmiProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

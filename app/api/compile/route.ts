@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
+  // Rate limit check
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`compile:${clientId}`, RATE_LIMITS.compile);
+  
+  if (!rateLimitResult.success) {
+    return rateLimitResponse(rateLimitResult);
+  }
+
   try {
     const { sourceCode, contractName } = await request.json();
 
