@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { LearnModal } from '@/components/learn/LearnModal';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { DeleteProjectButton } from '@/components/dashboard/DeleteProjectButton';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -64,25 +65,28 @@ export default async function DashboardPage() {
       {projects && projects.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`}>
-              <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle>{project.name}</CardTitle>
-                      <CardDescription className="mt-1">
-                        {project.project_type.replace('_', ' ')}
-                      </CardDescription>
+            <div key={project.id} className="relative group">
+              <Link href={`/projects/${project.id}`}>
+                <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{project.name}</CardTitle>
+                        <CardDescription className="mt-1">
+                          {project.project_type.replace('_', ' ')}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
+                            project.status
+                          )}`}
+                        >
+                          {project.status}
+                        </span>
+                      </div>
                     </div>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
-                        project.status
-                      )}`}
-                    >
-                      {project.status}
-                    </span>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {project.description}
@@ -101,6 +105,11 @@ export default async function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
+              {/* Delete button - shows on hover */}
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <DeleteProjectButton projectId={project.id} projectName={project.name} />
+              </div>
+            </div>
           ))}
         </div>
       ) : (

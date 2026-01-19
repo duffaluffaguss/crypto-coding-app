@@ -58,7 +58,12 @@
   }
 }
 
-/* Custom scrollbar for code editor */
+/* Custom scrollbar - always visible */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted));
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -70,10 +75,17 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--muted-foreground) / 0.4);
   border-radius: 4px;
+  min-height: 40px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* Force scrollbar to always show when content overflows */
+.custom-scrollbar {
+  overflow-y: auto !important;
+  overflow-x: hidden;
 }
