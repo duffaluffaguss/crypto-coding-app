@@ -196,11 +196,11 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
       console.error('Failed to save hint request:', error);
     }
 
-    // Manually append message and trigger API call
-    setMessages([
-      ...messages,
-      { id: Date.now().toString(), role: 'user', content: hintRequest },
-    ]);
+    // Use append to add message AND trigger API call
+    append({
+      role: 'user',
+      content: hintRequest,
+    });
   };
 
   const formatMessage = (content: string) => {
