@@ -3,7 +3,9 @@
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { baseSepolia } from 'wagmi/chains';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { WalletEducation } from '@/components/learn/WalletEducation';
 
 export function ConnectButton() {
   const { address, isConnected } = useAccount();
@@ -12,8 +14,74 @@ export function ConnectButton() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showEducation, setShowEducation] = useState(false);
+  const [hasCompletedEducation, setHasCompletedEducation] = useState(true); // Default to true to avoid flash
+  const supabase = createClient();
 
   const isWrongNetwork = isConnected && chainId !== baseSepolia.id;
+
+  // Check if user has completed wallet education
+  useEffect(() => {
+    const checkEducationStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('wallet_education_completed')
+          .eq('id', user.id)
+          .single();
+        
+        setHasCompletedEducation(data?.wallet_education_completed ?? false);
+      }
+    };
+    checkEducationStatus();
+  }, [supabase]);
+
+  // Save wallet address when connected
+  useEffect(() => {
+    const saveWalletAddress = async () => {
+      if (isConnected && address) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('user_profiles')
+            .upsert({
+              id: user.id,
+              wallet_address: address,
+              wallet_connected_at: new Date().toISOString(),
+            }, { onConflict: 'id' });
+        }
+      }
+    };
+    saveWalletAddress();
+  }, [isConnected, address, supabase]);
+
+  const handleConnectClick = () => {
+    if (!hasCompletedEducation) {
+      setShowEducation(true);
+    } else {
+      handleConnect();
+    }
+  };
+
+  const handleEducationComplete = async () => {
+    setShowEducation(false);
+    
+    // Mark education as completed
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          wallet_education_completed: true,
+        }, { onConflict: 'id' });
+    }
+    setHasCompletedEducation(true);
+    
+    // Now connect the wallet
+    handleConnect();
+  };
 
   const handleConnect = () => {
     const coinbaseConnector = connectors.find((c) => c.id === 'coinbaseWalletSDK');
@@ -32,55 +100,63 @@ export function ConnectButton() {
 
   if (!isConnected) {
     return (
-      <Button
-        onClick={handleConnect}
-        disabled={isPending}
-        variant="outline"
-        size="sm"
-        className="gap-2"
-      >
-        {isPending ? (
-          <>
-            <svg
-              className="w-4 h-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
+      <>
+        <Button
+          onClick={handleConnectClick}
+          disabled={isPending}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          {isPending ? (
+            <>
+              <svg
+                className="w-4 h-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+              Connecting...
+            </>
+          ) : (
+            <>
+              <svg
+                className="w-4 h-4"
+                fill="none"
                 stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-            Connecting...
-          </>
-        ) : (
-          <>
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-            Connect Wallet
-          </>
-        )}
-      </Button>
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              Connect Wallet
+            </>
+          )}
+        </Button>
+
+        <WalletEducation
+          isOpen={showEducation}
+          onClose={() => setShowEducation(false)}
+          onComplete={handleEducationComplete}
+        />
+      </>
     );
   }
 

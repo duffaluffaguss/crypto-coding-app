@@ -44,6 +44,15 @@
   - The Story So Far (history)
   - What You Can Build (possibilities)
 - ✅ Learn button added to IDE toolbar and Dashboard
+- ✅ Google OAuth login/signup (Continue with Google)
+- ✅ Wallet Education flow (5-step interactive tutorial):
+  - What is a Wallet?
+  - History of Wallets
+  - Security Basics
+  - Recovery Options
+  - Ready to Connect!
+- ✅ User wallet address storage (saves to user_profiles table)
+- ✅ Database migration for user wallet data
 
 ---
 
@@ -69,10 +78,28 @@
 - [x] Possibilities tab - What creators/gamers/entrepreneurs can build
 - [x] Added to IDE toolbar and Dashboard page
 
+### Google OAuth
+- [x] Login page - "Continue with Google" button
+- [x] Signup page - "Continue with Google" button
+- [x] Redirects through Supabase OAuth flow
+
+### Wallet Education & User Wallets
+- [x] `WalletEducation.tsx` - 5-step interactive wallet tutorial
+- [x] Shows automatically on first wallet connection
+- [x] Covers: basics, history, security, recovery
+- [x] Stores wallet address in `user_profiles` table
+- [x] Database migration: `004_user_wallets.sql`
+
+## 🚧 Setup Required (One-Time)
+- [ ] **Google OAuth**: Enable in Supabase Dashboard → Authentication → Providers → Google
+- [ ] **Run migration**: Execute `supabase/migrations/004_user_wallets.sql` in SQL Editor
+- [ ] **Vercel**: Redeploy after pushing to update production
+
 ## 🚧 Potential Enhancements
 - [ ] Lesson locking (prevent skipping without verification)
 - [ ] Visual badge for "needs verification"
 - [ ] Test full verification flow end-to-end
+- [ ] Auto-request test tokens from faucet on first wallet connect
 
 ---
 
