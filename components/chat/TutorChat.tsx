@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useChat } from 'ai/react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -16,8 +16,10 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
   const [hintLevel, setHintLevel] = useState(0);
+  const [introducedLessons, setIntroducedLessons] = useState<Set<string>>(new Set());
+  const [loadingIntro, setLoadingIntro] = useState(false);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, append } = useChat({
     api: '/api/ai/chat',
     body: {
       context: {
@@ -32,7 +34,7 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
       {
         id: 'welcome',
         role: 'assistant',
-        content: `Hey! I'm Sol, your Solidity mentor. I'm here to help you build **${project.name}**.\n\nI won't write the code for you, but I'll guide you every step of the way. Ask me anything about your current lesson or if you're stuck!\n\nWhat would you like to learn first?`,
+        content: `👋 Hey there! I'm **Sol**, your personal coding tutor!\n\nI'm here to guide you through building **${project.name}** step by step. I'll:\n\n🎓 **Explain concepts** in simple terms\n📖 **Define new terms** as we go\n✍️ **Help you fill in the code** with guidance\n💡 **Give hints** when you're stuck\n\nLet's make learning to code fun! When you're ready, I'll introduce your first lesson. Just say **"Let's start!"** or click the lesson on the left.`,
       },
     ],
     onFinish: async (message) => {
@@ -84,6 +86,66 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Proactively introduce new lessons
+  const fetchLessonIntro = useCallback(async (lesson: Lesson) => {
+    if (introducedLessons.has(lesson.id) || loadingIntro) return;
+    
+    setLoadingIntro(true);
+    try {
+      const response = await fetch('/api/ai/lesson-intro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonTitle: lesson.title,
+          lessonDescription: lesson.description,
+          lessonConcepts: lesson.concepts,
+          projectType: project.project_type,
+          projectName: project.name,
+        }),
+      });
+
+      if (response.ok) {
+        const { intro } = await response.json();
+        
+        // Add the intro as an assistant message
+        const introMessage = {
+          id: `intro-${lesson.id}`,
+          role: 'assistant' as const,
+          content: intro,
+        };
+        
+        setMessages(prev => [...prev, introMessage]);
+        setIntroducedLessons(prev => new Set(prev).add(lesson.id));
+
+        // Save to database
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('chat_messages').insert({
+            user_id: user.id,
+            project_id: project.id,
+            role: 'assistant',
+            content: intro,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch lesson intro:', error);
+    } finally {
+      setLoadingIntro(false);
+    }
+  }, [introducedLessons, loadingIntro, project, setMessages, supabase]);
+
+  // Trigger lesson intro when lesson changes
+  useEffect(() => {
+    if (currentLesson && !introducedLessons.has(currentLesson.id)) {
+      // Small delay to let the user see the lesson selection
+      const timer = setTimeout(() => {
+        fetchLessonIntro(currentLesson);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentLesson, introducedLessons, fetchLessonIntro]);
 
   // Save user message to database before sending
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -157,54 +219,76 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
       <div className="p-3 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <svg
-              className="w-4 h-4 text-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              />
-            </svg>
+            {loadingIntro ? (
+              <svg className="w-4 h-4 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <span className="text-lg">🌱</span>
+            )}
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-semibold">Sol - AI Tutor</h3>
             <p className="text-xs text-muted-foreground">
-              {currentLesson?.title || 'Getting Started'}
+              {loadingIntro ? 'Preparing your lesson...' : currentLesson?.title || 'Getting Started'}
             </p>
           </div>
-          {/* Hint button */}
+        </div>
+        
+        {/* Quick Actions */}
+        <div className="flex gap-1 mt-2">
           <Button
             variant="outline"
             size="sm"
             onClick={requestHint}
-            disabled={isLoading}
-            className="text-xs"
+            disabled={isLoading || loadingIntro}
+            className="text-xs flex-1"
           >
-            <svg
-              className="w-3 h-3 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              />
-            </svg>
-            Hint {hintLevel > 0 && `(${hintLevel}/3)`}
+            💡 Hint
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const message = "Can you explain the key terms and concepts for this lesson in simple words?";
+              handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLTextAreaElement>);
+            }}
+            disabled={isLoading || loadingIntro}
+            className="text-xs flex-1"
+          >
+            📖 Explain
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const message = "I'm stuck! Can you show me what code I need to write with blanks for me to fill in?";
+              handleInputChange({ target: { value: message } } as React.ChangeEvent<HTMLTextAreaElement>);
+            }}
+            disabled={isLoading || loadingIntro}
+            className="text-xs flex-1"
+          >
+            ✍️ Guide
           </Button>
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+        {loadingIntro && (
+          <div className="flex justify-start">
+            <div className="bg-muted rounded-lg px-4 py-3 max-w-[95%]">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span>Sol is preparing your lesson introduction...</span>
+              </div>
+            </div>
+          </div>
+        )}
         {messages.map((message) => (
           <div
             key={message.id}
