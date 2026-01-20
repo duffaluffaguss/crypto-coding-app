@@ -4,6 +4,7 @@ import { UserAvatar } from './UserAvatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LeagueBadge } from '@/components/leaderboard/LeagueBadge';
 import { SocialVerificationList } from '@/components/verification/SocialVerifyButton';
+import { VerificationBadges } from '@/components/verification/VerificationBadges';
 import { cn, formatDate } from '@/lib/utils';
 
 interface ProfileStats {
@@ -70,6 +71,7 @@ export function ProfileCard({
               </h2>
               {pointsRank && <LeagueBadge rank={pointsRank} size="sm" />}
             </div>
+            <VerificationBadges userId={userId} size="sm" maxBadges={4} className="mt-1" />
             {isOwnProfile && email && (
               <p className="text-sm text-muted-foreground truncate">{email}</p>
             )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { VerificationBadges } from '@/components/verification/VerificationBadges';
 
 export interface LeaderboardUser {
   id: string;
@@ -110,6 +111,9 @@ export function Podium({ users, metric, currentUserId }: PodiumProps) {
               >
                 {user.display_name}
               </span>
+
+              {/* Verification badges */}
+              <VerificationBadges userId={user.id} size="xs" maxBadges={2} className="mt-1" />
 
               {/* Value */}
               <span className="text-xs text-muted-foreground">

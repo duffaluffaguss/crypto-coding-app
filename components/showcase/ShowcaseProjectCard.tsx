@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 import CloneButton from '@/components/project/CloneButton';
+import { VerificationBadges } from '@/components/verification/VerificationBadges';
 import { createClient } from '@/lib/supabase/client';
 import type { ProjectType } from '@/types';
 
@@ -12,6 +13,7 @@ interface ShowcaseProjectCardProps {
   project: {
     id: string;
     name: string;
+    user_id: string;
     project_type: ProjectType | string;
     showcase_description: string | null;
     description: string;
@@ -95,8 +97,9 @@ export function ShowcaseProjectCard({ project }: ShowcaseProjectCardProps) {
               <CardTitle className="truncate group-hover:text-primary transition-colors">
                 {project.name}
               </CardTitle>
-              <CardDescription className="mt-1">
-                by {project.profiles?.display_name || 'Anonymous'}
+              <CardDescription className="mt-1 flex items-center gap-2 flex-wrap">
+                <span>by {project.profiles?.display_name || 'Anonymous'}</span>
+                <VerificationBadges userId={project.user_id} size="xs" maxBadges={2} />
               </CardDescription>
             </div>
             <span

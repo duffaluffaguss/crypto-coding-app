@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { VerificationBadges } from '@/components/verification/VerificationBadges';
 import type { LeaderboardUser } from './Podium';
 
 interface LeaderboardTableProps {
@@ -108,6 +109,7 @@ export function LeaderboardTable({
                           <span className="ml-2 text-xs text-primary">(You)</span>
                         )}
                       </span>
+                      <VerificationBadges userId={user.id} size="xs" maxBadges={2} />
                     </div>
                   </div>
                 </td>

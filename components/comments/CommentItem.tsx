@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { Button } from '@/components/ui/button';
+import { VerificationBadges } from '@/components/verification/VerificationBadges';
 import { createClient } from '@/lib/supabase/client';
 
 interface CommentItemProps {
@@ -89,10 +90,11 @@ export function CommentItem({ comment, currentUserId, onDelete }: CommentItemPro
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
             <span className="font-medium text-sm truncate">
               {comment.profiles?.display_name || 'Anonymous'}
             </span>
+            <VerificationBadges userId={comment.user_id} size="xs" maxBadges={2} />
             <span className="text-xs text-muted-foreground flex-shrink-0">
               {formatRelativeTime(comment.created_at)}
             </span>
