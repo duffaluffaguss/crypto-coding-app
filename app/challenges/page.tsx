@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { ChallengeCard, ChallengeStats } from '@/components/challenges';
+import { ChallengeCard, ChallengeStats, CommunityChallengeCard } from '@/components/challenges';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { generateWeeklyProgress, calculateChallengeStreak, getWeekBoundaries } from '@/lib/challenge-bonuses';
+import { Plus, Users } from 'lucide-react';
 
 export const metadata = {
   title: 'Daily Challenges | Zero to Crypto Dev',
@@ -118,6 +119,27 @@ export default async function ChallengesPage() {
   const todayChallenge = recentChallenges.find((c: Challenge) => c.challenge_date === today);
   const pastChallenges = recentChallenges.filter((c: Challenge) => c.challenge_date !== today);
 
+  // Fetch approved community challenges
+  const { data: communityChallenges } = await supabase
+    .from('user_challenges')
+    .select(`
+      *,
+      creator:profiles!user_challenges_creator_id_fkey(display_name)
+    `)
+    .eq('is_approved', true)
+    .order('created_at', { ascending: false })
+    .limit(6);
+
+  // Fetch user's community challenge completions
+  const { data: communityCompletions } = await supabase
+    .from('user_challenge_completions')
+    .select('challenge_id, points_earned')
+    .eq('user_id', user.id);
+
+  const communityCompletionMap = new Map<string, number>(
+    (communityCompletions || []).map((c: any) => [c.challenge_id, c.points_earned])
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -128,12 +150,20 @@ export default async function ChallengesPage() {
             Sharpen your smart contract skills with daily coding challenges
           </p>
         </div>
-        <Link href="/challenges/leaderboard">
-          <Button variant="outline" className="gap-2">
-            <span>🏆</span>
-            Leaderboard
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/challenges/create">
+            <Button variant="default" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Create Challenge
+            </Button>
+          </Link>
+          <Link href="/challenges/leaderboard">
+            <Button variant="outline" className="gap-2">
+              <span>🏆</span>
+              Leaderboard
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Section */}
@@ -245,6 +275,58 @@ export default async function ChallengesPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Community Challenges Section */}
+      <div className="mt-12">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-500" />
+              Community Challenges
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Challenges created by the community
+            </p>
+          </div>
+          <Link href="/challenges/create">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Create Your Own
+            </Button>
+          </Link>
+        </div>
+
+        {communityChallenges && communityChallenges.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {communityChallenges.map((challenge: any) => (
+              <CommunityChallengeCard
+                key={challenge.id}
+                challenge={challenge}
+                isCompleted={communityCompletionMap.has(challenge.id)}
+                pointsEarned={communityCompletionMap.get(challenge.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-muted/30">
+            <CardContent className="py-12 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/10 flex items-center justify-center">
+                <Users className="w-8 h-8 text-purple-500" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No Community Challenges Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Be the first to create a challenge for the community!
+              </p>
+              <Link href="/challenges/create">
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Challenge
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

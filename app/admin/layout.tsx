@@ -9,6 +9,7 @@ import {
   Home,
   Shield,
   BarChart3,
+  Puzzle,
 } from 'lucide-react';
 
 const navItems = [
@@ -26,6 +27,11 @@ const navItems = [
     href: '/admin/users',
     label: 'Users',
     icon: Users,
+  },
+  {
+    href: '/admin/challenges',
+    label: 'Challenges',
+    icon: Puzzle,
   },
   {
     href: '/admin/feedback',

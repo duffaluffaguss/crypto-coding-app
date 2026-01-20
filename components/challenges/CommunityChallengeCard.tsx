@@ -1,0 +1,105 @@
+'use client';
+
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Users } from 'lucide-react';
+
+interface CommunityChallenge {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  points: number;
+  category: string;
+  created_at: string;
+  creator?: {
+    display_name: string | null;
+  };
+  completion_count?: number;
+}
+
+interface CommunityChallengeCardProps {
+  challenge: CommunityChallenge;
+  isCompleted?: boolean;
+  pointsEarned?: number;
+}
+
+const difficultyColors = {
+  beginner: 'bg-green-500/10 text-green-500 border-green-500/20',
+  intermediate: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+  advanced: 'bg-red-500/10 text-red-500 border-red-500/20',
+};
+
+const difficultyLabels = {
+  beginner: '🌱 Beginner',
+  intermediate: '🔥 Intermediate',
+  advanced: '⚡ Advanced',
+};
+
+export function CommunityChallengeCard({ challenge, isCompleted, pointsEarned }: CommunityChallengeCardProps) {
+  const createdDate = new Date(challenge.created_at).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return (
+    <Link href={`/challenges/community/${challenge.id}`}>
+      <Card 
+        className={`h-full transition-all cursor-pointer hover:border-primary/50 hover:shadow-md ${
+          isCompleted ? 'bg-green-500/5' : ''
+        }`}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-500 border-purple-500/20">
+                  <Users className="w-3 h-3 mr-1" />
+                  Community
+                </Badge>
+                {isCompleted && (
+                  <Badge variant="outline" className="border-green-500 text-green-500 text-xs">
+                    ✓ Completed
+                  </Badge>
+                )}
+              </div>
+              <CardTitle className="text-lg leading-tight">{challenge.title}</CardTitle>
+              <CardDescription className="text-xs mt-1">
+                by {challenge.creator?.display_name || 'Anonymous'} • {createdDate}
+              </CardDescription>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className={`px-2 py-0.5 text-xs rounded-full border ${difficultyColors[challenge.difficulty]}`}>
+                {difficultyLabels[challenge.difficulty]}
+              </span>
+              <span className="text-sm font-semibold text-primary">
+                {isCompleted && pointsEarned ? pointsEarned : challenge.points} pts
+              </span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {challenge.description}
+          </p>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground capitalize">
+              📝 {challenge.category}
+            </span>
+            {challenge.completion_count !== undefined && challenge.completion_count > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {challenge.completion_count} completion{challenge.completion_count !== 1 ? 's' : ''}
+              </span>
+            )}
+            {isCompleted ? (
+              <span className="text-xs text-green-500 font-medium">View Solution →</span>
+            ) : (
+              <span className="text-xs text-primary font-medium">Start Challenge →</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
