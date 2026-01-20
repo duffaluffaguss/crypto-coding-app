@@ -12,6 +12,7 @@ export const CERTIFICATE_NFT_ABI = [
       { name: 'tokenId', type: 'uint256', indexed: true },
       { name: 'user', type: 'address', indexed: true },
       { name: 'projectId', type: 'string', indexed: false },
+      { name: 'score', type: 'uint256', indexed: false },
     ],
   },
   {
@@ -20,6 +21,13 @@ export const CERTIFICATE_NFT_ABI = [
     inputs: [
       { name: 'minter', type: 'address', indexed: true },
       { name: 'authorized', type: 'bool', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'SoulboundStatusUpdated',
+    inputs: [
+      { name: 'soulbound', type: 'bool', indexed: false },
     ],
   },
   
@@ -59,6 +67,7 @@ export const CERTIFICATE_NFT_ABI = [
           { name: 'recipient', type: 'address' },
           { name: 'completionDate', type: 'uint256' },
           { name: 'tokenId', type: 'uint256' },
+          { name: 'score', type: 'uint256' },
         ],
       },
     ],
@@ -75,6 +84,20 @@ export const CERTIFICATE_NFT_ABI = [
     name: 'authorizedMinters',
     stateMutability: 'view',
     inputs: [{ name: 'minter', type: 'address' }],
+    outputs: [{ type: 'bool' }],
+  },
+  {
+    type: 'function',
+    name: 'soulbound',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'bool' }],
+  },
+  {
+    type: 'function',
+    name: 'isSoulbound',
+    stateMutability: 'view',
+    inputs: [],
     outputs: [{ type: 'bool' }],
   },
   {
@@ -109,6 +132,7 @@ export const CERTIFICATE_NFT_ABI = [
       { name: 'projectId', type: 'string' },
       { name: 'projectName', type: 'string' },
       { name: 'projectType', type: 'string' },
+      { name: 'score', type: 'uint256' },
     ],
     outputs: [{ type: 'uint256' }],
   },
@@ -129,6 +153,13 @@ export const CERTIFICATE_NFT_ABI = [
     inputs: [{ name: 'baseURI', type: 'string' }],
     outputs: [],
   },
+  {
+    type: 'function',
+    name: 'setSoulbound',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: '_soulbound', type: 'bool' }],
+    outputs: [],
+  },
 ] as const;
 
 // ============ Types ============
@@ -140,6 +171,7 @@ export interface Certificate {
   recipient: Address;
   completionDate: bigint;
   tokenId: bigint;
+  score: bigint;
 }
 
 export interface MintCertificateParams {
@@ -147,6 +179,7 @@ export interface MintCertificateParams {
   projectId: string;
   projectName: string;
   projectType: string;
+  score: number;
 }
 
 // ============ Contract Addresses ============
@@ -284,6 +317,26 @@ export async function getTotalSupply(chainId: number): Promise<bigint> {
 }
 
 /**
+ * Check if the contract is in soulbound mode
+ */
+export async function checkIsSoulbound(chainId: number): Promise<boolean> {
+  const contractAddress = getCertificateNFTAddress(chainId);
+  if (!contractAddress) {
+    throw new Error(`No contract address for chain ${chainId}`);
+  }
+
+  const client = getPublicClient(chainId);
+  
+  const isSoulbound = await client.readContract({
+    address: contractAddress,
+    abi: CERTIFICATE_NFT_ABI,
+    functionName: 'soulbound',
+  });
+
+  return isSoulbound;
+}
+
+/**
  * Get the token URI for a certificate
  */
 export async function getTokenURI(
@@ -325,7 +378,7 @@ export function prepareMintTransaction(
   const data = encodeFunctionData({
     abi: CERTIFICATE_NFT_ABI,
     functionName: 'mintCertificate',
-    args: [params.to, params.projectId, params.projectName, params.projectType],
+    args: [params.to, params.projectId, params.projectName, params.projectType, BigInt(params.score)],
   });
 
   return {
@@ -346,6 +399,25 @@ export function formatCompletionDate(timestamp: bigint): string {
     month: 'long',
     day: 'numeric',
   });
+}
+
+/**
+ * Format score for display
+ */
+export function formatScore(score: bigint): string {
+  return `${score.toString()}%`;
+}
+
+/**
+ * Get score grade based on score value
+ */
+export function getScoreGrade(score: bigint | number): string {
+  const s = typeof score === 'bigint' ? Number(score) : score;
+  if (s >= 90) return 'A';
+  if (s >= 80) return 'B';
+  if (s >= 70) return 'C';
+  if (s >= 60) return 'D';
+  return 'F';
 }
 
 /**

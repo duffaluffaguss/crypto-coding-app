@@ -10,6 +10,7 @@ import "./interfaces/ICertificateNFT.sol";
  * @title CertificateNFT
  * @dev ERC-721 NFT contract for issuing completion certificates
  * @notice Only authorized minters can mint certificates, one per user per project
+ * @notice Supports soulbound (non-transferable) tokens
  */
 contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
     // ============ State Variables ============
@@ -19,6 +20,9 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
     
     /// @dev Base URI for metadata API
     string private _baseTokenURI;
+    
+    /// @dev Whether tokens are soulbound (non-transferable)
+    bool public soulbound;
     
     /// @dev Mapping of authorized minters
     mapping(address => bool) public authorizedMinters;
@@ -32,23 +36,37 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
     /// @dev Mapping of tokenId => Certificate data
     mapping(uint256 => Certificate) private _certificates;
 
+    // ============ Errors ============
+    
+    error NotAuthorizedMinter();
+    error MintToZeroAddress();
+    error EmptyProjectId();
+    error AlreadyMintedForProject();
+    error TokenDoesNotExist();
+    error NoCertificateForProject();
+    error SoulboundTokenCannotBeTransferred();
+    error InvalidScore();
+
     // ============ Modifiers ============
     
     modifier onlyMinter() {
-        require(authorizedMinters[msg.sender], "CertificateNFT: caller is not an authorized minter");
+        if (!authorizedMinters[msg.sender]) revert NotAuthorizedMinter();
         _;
     }
 
     // ============ Constructor ============
     
     /**
-     * @dev Initializes the contract with name, symbol, and base URI
+     * @dev Initializes the contract with name, symbol, base URI, and soulbound setting
      * @param baseURI The base URI for token metadata
+     * @param _soulbound Whether tokens should be non-transferable
      */
-    constructor(string memory baseURI) ERC721("CryptoCode Certificate", "CCERT") Ownable(msg.sender) {
+    constructor(string memory baseURI, bool _soulbound) ERC721("CryptoCode Certificate", "CCERT") Ownable(msg.sender) {
         _baseTokenURI = baseURI;
+        soulbound = _soulbound;
         // Owner is automatically an authorized minter
         authorizedMinters[msg.sender] = true;
+        emit SoulboundStatusUpdated(_soulbound);
     }
 
     // ============ Admin Functions ============
@@ -70,6 +88,15 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
     function setBaseURI(string memory baseURI) external onlyOwner {
         _baseTokenURI = baseURI;
     }
+    
+    /**
+     * @dev Updates the soulbound status
+     * @param _soulbound Whether tokens should be non-transferable
+     */
+    function setSoulbound(bool _soulbound) external onlyOwner {
+        soulbound = _soulbound;
+        emit SoulboundStatusUpdated(_soulbound);
+    }
 
     // ============ Minting Functions ============
     
@@ -79,17 +106,20 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
      * @param projectId Unique project identifier
      * @param projectName Human-readable project name
      * @param projectType Type of project (e.g., "smart-contract", "defi", "nft")
+     * @param score User's score (0-100)
      * @return tokenId The ID of the minted token
      */
     function mintCertificate(
         address to,
         string calldata projectId,
         string calldata projectName,
-        string calldata projectType
+        string calldata projectType,
+        uint256 score
     ) external onlyMinter returns (uint256) {
-        require(to != address(0), "CertificateNFT: mint to zero address");
-        require(bytes(projectId).length > 0, "CertificateNFT: empty project ID");
-        require(!_userProjectMinted[to][projectId], "CertificateNFT: already minted for this project");
+        if (to == address(0)) revert MintToZeroAddress();
+        if (bytes(projectId).length == 0) revert EmptyProjectId();
+        if (_userProjectMinted[to][projectId]) revert AlreadyMintedForProject();
+        if (score > 100) revert InvalidScore();
         
         uint256 tokenId = _nextTokenId++;
         
@@ -100,7 +130,8 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
             projectType: projectType,
             recipient: to,
             completionDate: block.timestamp,
-            tokenId: tokenId
+            tokenId: tokenId,
+            score: score
         });
         
         // Mark as minted
@@ -110,7 +141,7 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
         // Mint the NFT
         _safeMint(to, tokenId);
         
-        emit CertificateMinted(tokenId, to, projectId);
+        emit CertificateMinted(tokenId, to, projectId, score);
         
         return tokenId;
     }
@@ -134,7 +165,7 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
      * @return tokenId The token ID (reverts if not minted)
      */
     function getTokenForProject(address user, string calldata projectId) external view returns (uint256) {
-        require(_userProjectMinted[user][projectId], "CertificateNFT: no certificate for this project");
+        if (!_userProjectMinted[user][projectId]) revert NoCertificateForProject();
         return _userProjectToken[user][projectId];
     }
     
@@ -144,7 +175,7 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
      * @return Certificate struct with all metadata
      */
     function getCertificate(uint256 tokenId) external view returns (Certificate memory) {
-        require(_ownerOf(tokenId) != address(0), "CertificateNFT: token does not exist");
+        if (_ownerOf(tokenId) == address(0)) revert TokenDoesNotExist();
         return _certificates[tokenId];
     }
     
@@ -154,6 +185,14 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
      */
     function totalSupply() external view returns (uint256) {
         return _nextTokenId;
+    }
+    
+    /**
+     * @dev Checks if token is soulbound
+     * @return bool Whether tokens are non-transferable
+     */
+    function isSoulbound() external view returns (bool) {
+        return soulbound;
     }
 
     // ============ Overrides ============
@@ -171,7 +210,7 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
      * @return string Full URI for token metadata
      */
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        require(_ownerOf(tokenId) != address(0), "CertificateNFT: token does not exist");
+        if (_ownerOf(tokenId) == address(0)) revert TokenDoesNotExist();
         return string(abi.encodePacked(_baseTokenURI, "/api/certificate/", _toString(tokenId)));
     }
     
@@ -180,6 +219,22 @@ contract CertificateNFT is ICertificateNFT, ERC721, ERC721URIStorage, Ownable {
      */
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721URIStorage) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+    
+    /**
+     * @dev Hook that is called before any token transfer
+     * @notice Enforces soulbound restriction when enabled
+     */
+    function _update(address to, uint256 tokenId, address auth) internal virtual override returns (address) {
+        address from = _ownerOf(tokenId);
+        
+        // Allow minting (from == address(0)) and burning (to == address(0))
+        // Block transfers if soulbound
+        if (soulbound && from != address(0) && to != address(0)) {
+            revert SoulboundTokenCannotBeTransferred();
+        }
+        
+        return super._update(to, tokenId, auth);
     }
     
     // ============ Internal Helpers ============

@@ -18,6 +18,7 @@ interface ICertificateNFT {
         address recipient;
         uint256 completionDate;
         uint256 tokenId;
+        uint256 score;
     }
 
     // ============ Events ============
@@ -27,8 +28,9 @@ interface ICertificateNFT {
      * @param tokenId The ID of the minted token
      * @param user The recipient address
      * @param projectId The project identifier
+     * @param score The user's score
      */
-    event CertificateMinted(uint256 indexed tokenId, address indexed user, string projectId);
+    event CertificateMinted(uint256 indexed tokenId, address indexed user, string projectId, uint256 score);
     
     /**
      * @dev Emitted when a minter's authorization is updated
@@ -36,6 +38,12 @@ interface ICertificateNFT {
      * @param authorized Whether the minter is authorized
      */
     event MinterUpdated(address indexed minter, bool authorized);
+    
+    /**
+     * @dev Emitted when soulbound status is updated
+     * @param soulbound Whether tokens are non-transferable
+     */
+    event SoulboundStatusUpdated(bool soulbound);
 
     // ============ Functions ============
     
@@ -53,18 +61,26 @@ interface ICertificateNFT {
     function setBaseURI(string memory baseURI) external;
     
     /**
+     * @dev Updates the soulbound status
+     * @param _soulbound Whether tokens should be non-transferable
+     */
+    function setSoulbound(bool _soulbound) external;
+    
+    /**
      * @dev Mints a certificate NFT to a user
      * @param to Recipient address
      * @param projectId Unique project identifier
      * @param projectName Human-readable project name
      * @param projectType Type of project
+     * @param score User's score (0-100)
      * @return tokenId The ID of the minted token
      */
     function mintCertificate(
         address to,
         string calldata projectId,
         string calldata projectName,
-        string calldata projectType
+        string calldata projectType,
+        uint256 score
     ) external returns (uint256);
     
     /**
@@ -102,4 +118,16 @@ interface ICertificateNFT {
      * @return bool Whether the address is authorized
      */
     function authorizedMinters(address minter) external view returns (bool);
+    
+    /**
+     * @dev Checks if tokens are soulbound
+     * @return bool Whether tokens are non-transferable
+     */
+    function isSoulbound() external view returns (bool);
+    
+    /**
+     * @dev Returns the soulbound status
+     * @return bool Whether tokens are non-transferable
+     */
+    function soulbound() external view returns (bool);
 }
