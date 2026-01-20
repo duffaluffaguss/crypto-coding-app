@@ -1,12 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, usePublicClient, useWalletClient, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { NETWORKS, DEFAULT_NETWORK, getTxExplorerUrl, type NetworkId } from '@/lib/networks';
 import { logContractDeployed } from '@/lib/activity';
+import { GasEstimate, GasEstimateInline } from './GasEstimate';
 import type { CompilationResult } from '@/types';
+
+interface GasEstimateData {
+  gasLimit: string;
+  gasPrice: string;
+  totalCostWei: string;
+  totalCostEth: string;
+  totalCostUsd: string;
+  gasPriceGwei: string;
+  isHighGas: boolean;
+}
 
 interface DeployButtonProps {
   projectId: string;
@@ -39,13 +50,25 @@ export function DeployButton({
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>(DEFAULT_NETWORK);
   const [showMainnetWarning, setShowMainnetWarning] = useState(false);
+  const [gasEstimate, setGasEstimate] = useState<GasEstimateData | null>(null);
+  const [showGasEstimate, setShowGasEstimate] = useState(false);
 
   const networkConfig = NETWORKS[selectedNetwork];
+
+  // Reset gas estimate when network or bytecode changes
+  useEffect(() => {
+    setGasEstimate(null);
+  }, [selectedNetwork, compilationResult?.bytecode]);
 
   const handleNetworkChange = (networkId: NetworkId) => {
     setSelectedNetwork(networkId);
     setError(null);
     setStatus('idle');
+    setGasEstimate(null);
+  };
+
+  const handleGasEstimateComplete = (estimate: GasEstimateData) => {
+    setGasEstimate(estimate);
   };
 
   const handleDeploy = async () => {
@@ -275,6 +298,46 @@ export function DeployButton({
         </select>
       </div>
 
+      {/* Gas Estimate Toggle */}
+      {isConnected && (
+        <button
+          onClick={() => setShowGasEstimate(!showGasEstimate)}
+          className="text-xs text-primary hover:underline flex items-center gap-1"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          {showGasEstimate ? 'Hide' : 'Estimate'} gas cost
+        </button>
+      )}
+
+      {/* Gas Estimate Panel */}
+      {showGasEstimate && (
+        <GasEstimate
+          bytecode={compilationResult?.bytecode || null}
+          network={selectedNetwork}
+          onEstimateComplete={handleGasEstimateComplete}
+        />
+      )}
+
+      {/* Inline Gas Estimate (when panel is hidden but estimate exists) */}
+      {!showGasEstimate && gasEstimate && (
+        <GasEstimateInline estimate={gasEstimate} />
+      )}
+
+      {/* High Gas Warning */}
+      {gasEstimate?.isHighGas && !showGasEstimate && (
+        <div className="bg-yellow-500/10 border border-yellow-500/50 rounded p-2 text-xs">
+          <div className="flex items-center gap-1 text-yellow-500">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="font-medium">High gas prices detected</span>
+          </div>
+          <p className="text-yellow-500/80 mt-1">Consider waiting for lower network fees.</p>
+        </div>
+      )}
+
       {/* Mainnet Warning */}
       {showMainnetWarning && (
         <div className="bg-yellow-500/10 border border-yellow-500/50 rounded p-2 text-xs">
@@ -287,6 +350,13 @@ export function DeployButton({
           <p className="text-yellow-500/80 mb-2">
             This will use real ETH! Make sure your contract is tested and ready for production.
           </p>
+          {gasEstimate && (
+            <div className="mb-2 p-1.5 bg-background/50 rounded">
+              <span className="text-muted-foreground">Estimated cost: </span>
+              <span className="font-medium">${gasEstimate.totalCostUsd}</span>
+              <span className="text-muted-foreground"> ({parseFloat(gasEstimate.totalCostEth).toFixed(5)} ETH)</span>
+            </div>
+          )}
           <div className="flex gap-2">
             <Button
               size="sm"
