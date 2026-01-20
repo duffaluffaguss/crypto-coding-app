@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Get referral code from URL param on mount
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      setReferralCode(ref);
+    }
+  }, [searchParams]);
 
   const handleGoogleSignup = async () => {
     setError(null);
@@ -24,10 +34,16 @@ export default function SignupPage() {
 
     const supabase = createClient();
 
+    // Include referral code in the redirect if present
+    const redirectUrl = referralCode
+      ? `${window.location.origin}/callback?redirectTo=/onboarding&ref=${referralCode}`
+      : `${window.location.origin}/callback?redirectTo=/onboarding`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/callback?redirectTo=/onboarding`,
+        redirectTo: redirectUrl,
+        queryParams: referralCode ? { referral_code: referralCode } : undefined,
       },
     });
 
@@ -50,6 +66,7 @@ export default function SignupPage() {
       options: {
         data: {
           display_name: displayName || email.split('@')[0],
+          referral_code: referralCode || undefined,
         },
       },
     });
@@ -118,6 +135,25 @@ export default function SignupPage() {
                 minLength={6}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="referralCode">
+                Referral Code <span className="text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="referralCode"
+                type="text"
+                placeholder="Enter referral code"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                maxLength={8}
+                className="font-mono tracking-wider"
+              />
+              {referralCode && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  🎁 You're signing up with a referral!
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

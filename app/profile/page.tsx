@@ -116,6 +116,18 @@ export default async function ProfilePage() {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <Link
+              href="/referrals"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Referrals
+            </Link>
+            <Link
+              href="/settings"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Settings
+            </Link>
             <form action="/api/auth/signout" method="post">
               <button
                 type="submit"
@@ -299,6 +311,35 @@ export default async function ProfilePage() {
                   </p>
                 </div>
                 <RestartTourButton />
+              </div>
+              <div className="border-t border-border pt-4 flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <span>🎁</span>
+                    Refer Friends
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Share your referral link and earn rewards when friends join
+                  </p>
+                </div>
+                <Link href="/referrals">
+                  <Button variant="outline" size="sm">
+                    View Referrals
+                  </Button>
+                </Link>
+              </div>
+              <div className="border-t border-border pt-4 flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">Settings</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Manage your account settings and preferences
+                  </p>
+                </div>
+                <Link href="/settings">
+                  <Button variant="outline" size="sm">
+                    Settings
+                  </Button>
+                </Link>
               </div>
             </div>
           </CardContent>
