@@ -155,6 +155,11 @@ export function LessonSidebar({
         currentLesson.id,
         currentLesson.title
       );
+
+      // Auto-save version on lesson completion
+      if (onLessonComplete) {
+        await onLessonComplete(currentLesson.title);
+      }
     } catch (error) {
       console.error('Failed to update progress:', error);
     } finally {

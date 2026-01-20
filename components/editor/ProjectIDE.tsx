@@ -57,10 +57,46 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [isProjectPublic, setIsProjectPublic] = useState(project.is_public || false);
   const [showExplanations, setShowExplanations] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [versionCount, setVersionCount] = useState<number>(0);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const editorRef = useRef<any>(null);
   const supabase = createClient();
   const { showTour, startTour, endTour } = useTour();
+
+  // Load version count for current file
+  const loadVersionCount = useCallback(async () => {
+    if (!activeFile || !project.id) return;
+    
+    try {
+      const params = new URLSearchParams({
+        projectId: project.id,
+        filePath: activeFile.filename,
+        limit: '1000' // Get all to count
+      });
+
+      const response = await fetch(`/api/versions?${params}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setVersionCount(data.versions?.length || 0);
+      }
+    } catch (err) {
+      console.error('Failed to load version count:', err);
+    }
+  }, [activeFile, project.id]);
+
+  // Load version count when active file changes
+  useEffect(() => {
+    loadVersionCount();
+  }, [loadVersionCount]);
+
+  // Handle lesson completion with auto-save
+  const handleLessonComplete = useCallback(async (lessonTitle: string) => {
+    if (activeFile && code.trim()) {
+      await saveCodeVersion(project.id, activeFile.filename, code, `Completed lesson: ${lessonTitle}`);
+      await loadVersionCount();
+    }
+  }, [activeFile, code, project.id, loadVersionCount]);
 
   // Format code with Prettier
   const formatCode = useCallback(async () => {
@@ -398,7 +434,9 @@ contract ${contractName} {
       .eq('id', activeFile.id);
 
     // Save version for manual saves
-    await saveCodeVersion(supabase, activeFile.id, code, versionMessage || 'Manual save');
+    await saveCodeVersion(project.id, activeFile.filename, code, versionMessage || 'Manual save');
+    // Refresh version count
+    await loadVersionCount();
 
     setFiles((prev) =>
       prev.map((f) => (f.id === activeFile.id ? { ...f, content: code } : f))
@@ -592,10 +630,15 @@ contract ${contractName} {
               variant={showVersionHistory ? 'default' : 'ghost'} 
               size="sm" 
               onClick={() => setShowVersionHistory(!showVersionHistory)} 
-              className="text-xs px-2"
+              className="text-xs px-2 relative"
               title="Version History"
             >
               🕐
+              {versionCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-medium">
+                  {versionCount > 9 ? '9+' : versionCount}
+                </span>
+              )}
             </Button>
             <Button 
               variant={showExplanations ? 'default' : 'ghost'} 
@@ -624,6 +667,7 @@ contract ${contractName} {
           onSelectLesson={setCurrentLesson}
           projectId={project.id}
           currentCode={code}
+          onLessonComplete={handleLessonComplete}
         />
       </div>
 
@@ -699,11 +743,17 @@ contract ${contractName} {
               size="sm" 
               onClick={() => setShowVersionHistory(!showVersionHistory)}
               title="View version history"
+              className="relative"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               History
+              {versionCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-medium">
+                  {versionCount > 99 ? '99+' : versionCount}
+                </span>
+              )}
             </Button>
             <Button 
               variant={showExplanations ? 'default' : 'outline'} 
@@ -740,7 +790,7 @@ contract ${contractName} {
               onCompile={async () => {
                 // Save version before deploy attempt
                 if (activeFile) {
-                  await saveCodeVersion(supabase, activeFile.id, code, 'Pre-deploy snapshot');
+                  await saveCodeVersion(project.id, activeFile.filename, code, 'Pre-deploy snapshot');
                 }
                 await compileCode();
               }}
@@ -751,7 +801,9 @@ contract ${contractName} {
                 }
                 // Save version after successful deploy
                 if (activeFile) {
-                  saveCodeVersion(supabase, activeFile.id, code, `Deployed to ${address.slice(0, 10)}...`);
+                  await saveCodeVersion(project.id, activeFile.filename, code, `Deployed to ${address.slice(0, 10)}...`);
+                  // Refresh version count
+                  loadVersionCount();
                 }
               }}
             />
@@ -989,7 +1041,8 @@ contract ${contractName} {
       {/* Version History Panel */}
       {activeFile && (
         <VersionHistory
-          fileId={activeFile.id}
+          projectId={project.id}
+          filePath={activeFile.filename}
           currentCode={code}
           isOpen={showVersionHistory}
           onClose={() => setShowVersionHistory(false)}

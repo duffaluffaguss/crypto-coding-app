@@ -2,19 +2,21 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 
 interface CodeVersion {
   id: string;
-  file_id: string;
+  project_id: string;
+  file_path: string;
+  file_id: string | null;
   content: string;
   message: string | null;
   created_at: string;
 }
 
 interface VersionHistoryProps {
-  fileId: string;
+  projectId: string;
+  filePath: string;
   currentCode: string;
   isOpen: boolean;
   onClose: () => void;
@@ -22,7 +24,8 @@ interface VersionHistoryProps {
 }
 
 export function VersionHistory({ 
-  fileId, 
+  projectId, 
+  filePath, 
   currentCode, 
   isOpen, 
   onClose, 
@@ -32,39 +35,71 @@ export function VersionHistory({
   const [loading, setLoading] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<CodeVersion | null>(null);
   const [compareMode, setCompareMode] = useState(false);
-  const supabase = createClient();
 
   const loadVersions = useCallback(async () => {
-    if (!fileId) return;
+    if (!projectId || !filePath) return;
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('code_versions')
-        .select('*')
-        .eq('file_id', fileId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const params = new URLSearchParams({
+        projectId,
+        filePath,
+        limit: '50'
+      });
 
-      if (error) throw error;
-      setVersions(data || []);
+      const response = await fetch(`/api/versions?${params}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load versions');
+      }
+
+      setVersions(data.versions || []);
     } catch (err) {
       console.error('Failed to load versions:', err);
     } finally {
       setLoading(false);
     }
-  }, [fileId, supabase]);
+  }, [projectId, filePath]);
 
   useEffect(() => {
-    if (isOpen && fileId) {
+    if (isOpen && projectId && filePath) {
       loadVersions();
     }
-  }, [isOpen, fileId, loadVersions]);
+  }, [isOpen, projectId, filePath, loadVersions]);
 
-  const handleRestore = (version: CodeVersion) => {
-    if (window.confirm('Restore this version? Your current code will be replaced.')) {
-      onRestore(version.content);
+  const handleRestore = async (version: CodeVersion) => {
+    if (!window.confirm('Restore this version? Your current code will be replaced.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/versions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          versionId: version.id,
+          projectId,
+          filePath
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to restore version');
+      }
+
+      onRestore(data.content);
       onClose();
+      
+      // Reload versions to show the new backup version
+      loadVersions();
+    } catch (err) {
+      console.error('Failed to restore version:', err);
+      alert('Failed to restore version. Please try again.');
     }
   };
 
@@ -259,22 +294,32 @@ export function VersionHistory({
 
 // Helper function to save a code version
 export async function saveCodeVersion(
-  supabase: ReturnType<typeof createClient>,
-  fileId: string,
+  projectId: string,
+  filePath: string,
   content: string,
   message?: string
 ) {
   try {
-    const { error } = await supabase
-      .from('code_versions')
-      .insert({
-        file_id: fileId,
+    const response = await fetch('/api/versions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectId,
+        filePath,
         content,
-        message: message || null,
-      });
+        message: message || null
+      })
+    });
 
-    if (error) throw error;
-    return { success: true };
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to save version');
+    }
+
+    return { success: true, versionId: data.versionId };
   } catch (err) {
     console.error('Failed to save code version:', err);
     return { success: false, error: err };
