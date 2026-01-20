@@ -5,6 +5,7 @@ import { Certificate } from '@/components/certificate/Certificate';
 import { ShareButtons } from '@/components/social';
 import { Button } from '@/components/ui/button';
 import { CertificateActions } from './CertificateActions';
+import { MintNFTSection } from './MintNFTSection';
 import type { Metadata } from 'next';
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
@@ -197,6 +198,13 @@ export default async function CertificatePage({ params }: PageProps) {
 
         {/* Actions */}
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* NFT Minting Section */}
+          <MintNFTSection
+            certificateData={certificateData}
+            projectId={projectId}
+            isOwner={isOwner}
+          />
+
           {/* Download/Print Actions - Client Component */}
           <CertificateActions certificateData={certificateData} />
 

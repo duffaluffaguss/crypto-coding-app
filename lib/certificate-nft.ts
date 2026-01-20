@@ -1,5 +1,5 @@
-import { createPublicClient, createWalletClient, http, type Address, type Hex } from 'viem';
-import { mainnet, sepolia } from 'viem/chains';
+import { createPublicClient, http, type Address, type Hex, encodeFunctionData } from 'viem';
+import { base, baseSepolia } from 'viem/chains';
 
 // ============ Contract ABI ============
 
@@ -152,8 +152,8 @@ export interface MintCertificateParams {
 // ============ Contract Addresses ============
 
 export const CERTIFICATE_NFT_ADDRESSES: Record<number, Address | undefined> = {
-  1: process.env.NEXT_PUBLIC_CERTIFICATE_NFT_MAINNET as Address | undefined,
-  11155111: process.env.NEXT_PUBLIC_CERTIFICATE_NFT_SEPOLIA as Address | undefined,
+  [base.id]: process.env.NEXT_PUBLIC_CERTIFICATE_NFT_BASE as Address | undefined,
+  [baseSepolia.id]: process.env.NEXT_PUBLIC_CERTIFICATE_NFT_BASE_SEPOLIA as Address | undefined,
 };
 
 /**
@@ -163,16 +163,27 @@ export function getCertificateNFTAddress(chainId: number): Address | undefined {
   return CERTIFICATE_NFT_ADDRESSES[chainId];
 }
 
+/**
+ * Check if the NFT contract is deployed on a given chain
+ */
+export function isNFTContractDeployed(chainId: number): boolean {
+  return !!getCertificateNFTAddress(chainId);
+}
+
 // ============ Client Helpers ============
 
 /**
  * Create a public client for reading contract state
  */
 export function getPublicClient(chainId: number) {
-  const chain = chainId === 1 ? mainnet : sepolia;
+  const chain = chainId === base.id ? base : baseSepolia;
+  const rpcUrl = chainId === base.id 
+    ? 'https://mainnet.base.org'
+    : (process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC || 'https://sepolia.base.org');
+  
   return createPublicClient({
     chain,
-    transport: http(),
+    transport: http(rpcUrl),
   });
 }
 
@@ -310,9 +321,6 @@ export function prepareMintTransaction(
   if (!contractAddress) {
     return null;
   }
-
-  // Encode the function call
-  const { encodeFunctionData } = require('viem');
   
   const data = encodeFunctionData({
     abi: CERTIFICATE_NFT_ABI,
@@ -347,26 +355,42 @@ export function getOpenSeaURL(chainId: number, tokenId: bigint): string | null {
   const contractAddress = getCertificateNFTAddress(chainId);
   if (!contractAddress) return null;
 
-  if (chainId === 1) {
-    return `https://opensea.io/assets/ethereum/${contractAddress}/${tokenId}`;
-  } else if (chainId === 11155111) {
-    return `https://testnets.opensea.io/assets/sepolia/${contractAddress}/${tokenId}`;
+  if (chainId === base.id) {
+    return `https://opensea.io/assets/base/${contractAddress}/${tokenId}`;
+  } else if (chainId === baseSepolia.id) {
+    return `https://testnets.opensea.io/assets/base-sepolia/${contractAddress}/${tokenId}`;
   }
   
   return null;
 }
 
 /**
- * Get Etherscan URL for a certificate
+ * Get BaseScan URL for a certificate
  */
-export function getEtherscanURL(chainId: number, tokenId: bigint): string | null {
+export function getBaseScanURL(chainId: number, tokenId: bigint): string | null {
   const contractAddress = getCertificateNFTAddress(chainId);
   if (!contractAddress) return null;
 
-  if (chainId === 1) {
-    return `https://etherscan.io/nft/${contractAddress}/${tokenId}`;
-  } else if (chainId === 11155111) {
-    return `https://sepolia.etherscan.io/nft/${contractAddress}/${tokenId}`;
+  if (chainId === base.id) {
+    return `https://basescan.org/nft/${contractAddress}/${tokenId}`;
+  } else if (chainId === baseSepolia.id) {
+    return `https://sepolia.basescan.org/nft/${contractAddress}/${tokenId}`;
+  }
+  
+  return null;
+}
+
+/**
+ * Get BaseScan URL for a contract address
+ */
+export function getContractBaseScanURL(chainId: number): string | null {
+  const contractAddress = getCertificateNFTAddress(chainId);
+  if (!contractAddress) return null;
+
+  if (chainId === base.id) {
+    return `https://basescan.org/address/${contractAddress}`;
+  } else if (chainId === baseSepolia.id) {
+    return `https://sepolia.basescan.org/address/${contractAddress}`;
   }
   
   return null;
