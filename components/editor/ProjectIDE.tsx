@@ -11,6 +11,7 @@ import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ExportButton } from '@/components/editor/ExportButton';
 import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
+import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -53,6 +54,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [isProjectPublic, setIsProjectPublic] = useState(project.is_public || false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const supabase = createClient();
+  const { showTour, startTour, endTour } = useTour();
 
   // Format code with Prettier
   const formatCode = useCallback(async () => {
@@ -558,7 +560,7 @@ contract ${contractName} {
       </div>
 
       {/* Desktop: Left Sidebar (hidden on mobile) */}
-      <div className="hidden lg:flex w-80 border-r border-border bg-card flex-col overflow-hidden">
+      <div className="hidden lg:flex w-80 border-r border-border bg-card flex-col overflow-hidden" data-tour="lessons">
         <FileExplorer />
         <LessonSidebar
           lessons={lessons}
@@ -637,7 +639,7 @@ contract ${contractName} {
                 'Format'
               )}
             </Button>
-            <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling}>
+            <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} data-tour="compile">
               {compiling ? (
                 <>
                   <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -651,6 +653,7 @@ contract ${contractName} {
               )}
             </Button>
             <div className="w-px h-6 bg-border mx-1" />
+            <div data-tour="deploy">
             <DeployButton
               projectId={project.id}
               code={code}
@@ -664,6 +667,7 @@ contract ${contractName} {
                 }
               }}
             />
+            </div>
             <ExportButton
               project={project}
               files={files}
@@ -722,6 +726,11 @@ contract ${contractName} {
             <div className="w-px h-6 bg-border mx-1" />
             <ThemeToggle />
             <div className="w-px h-6 bg-border mx-1" />
+            <Button variant="ghost" size="sm" onClick={startTour} title="Restart Tour">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => setShowChat(!showChat)}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -784,7 +793,7 @@ contract ${contractName} {
           </div>
 
           {/* Desktop: Code Editor */}
-          <div className="hidden lg:flex flex-1 flex-col overflow-hidden">
+          <div className="hidden lg:flex flex-1 flex-col overflow-hidden" data-tour="editor">
             <div className="flex-1">
               <MonacoEditor
                 height="100%"
@@ -811,7 +820,7 @@ contract ${contractName} {
 
           {/* Desktop: Tutor Chat */}
           {showChat && (
-            <div className="hidden lg:block w-[480px] border-l border-border">
+            <div className="hidden lg:block w-[480px] border-l border-border" data-tour="chat">
               <TutorChat project={project} currentLesson={currentLesson} currentCode={code} />
             </div>
           )}
@@ -856,6 +865,13 @@ contract ${contractName} {
           </button>
         </div>
       </div>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour 
+        projectId={project.id} 
+        forceShow={showTour}
+        onComplete={endTour}
+      />
     </div>
   );
 }

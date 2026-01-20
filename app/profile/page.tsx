@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileCard } from '@/components/profile/ProfileCard';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
+import { RestartTourButton } from '@/components/tour/RestartTourButton';
 import { AchievementGrid, type Achievement, type UserAchievement } from '@/components/achievements/AchievementBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -276,6 +277,29 @@ export default async function ProfilePage() {
                 value={stats.achievementPoints}
                 sublabel="earned"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Help & Settings */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>⚙️</span>
+              Help & Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">IDE Onboarding Tour</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Reset the guided tour to see it again when you open a project
+                  </p>
+                </div>
+                <RestartTourButton />
+              </div>
             </div>
           </CardContent>
         </Card>
