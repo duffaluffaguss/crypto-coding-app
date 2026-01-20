@@ -4,8 +4,9 @@ import { redirect } from 'next/navigation';
 import { ChallengeCard, ChallengeStats, ChallengeStreak, CommunityChallengeCard } from '@/components/challenges';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { generateWeeklyProgress, calculateChallengeStreak, getWeekBoundaries } from '@/lib/challenge-bonuses';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Calendar, Trophy } from 'lucide-react';
 
 export const metadata = {
   title: 'Daily Challenges | Zero to Crypto Dev',
@@ -183,156 +184,173 @@ export default async function ChallengesPage() {
         </div>
       </div>
 
-      {/* Today's Challenge */}
-      {todayChallenge ? (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <span className="animate-pulse">🎯</span> Today&apos;s Challenge
-          </h2>
-          <div className="max-w-2xl">
-            <ChallengeCard
-              challenge={todayChallenge}
-              isToday={true}
-              isCompleted={completionMap.has(todayChallenge.id)}
-              pointsEarned={
-                completionMap.has(todayChallenge.id)
-                  ? completionMap.get(todayChallenge.id)!.points +
-                    completionMap.get(todayChallenge.id)!.bonus
-                  : undefined
-              }
-            />
-          </div>
-        </div>
-      ) : (
-        <Card className="mb-8 bg-muted/50">
-          <CardContent className="py-8 text-center">
-            <div className="text-4xl mb-3">📅</div>
-            <h3 className="text-lg font-semibold">No Challenge Today</h3>
-            <p className="text-muted-foreground">Check back tomorrow for a new challenge!</p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Challenge Tabs */}
+      <Tabs defaultValue="official" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+          <TabsTrigger value="official" className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Official Challenges
+          </TabsTrigger>
+          <TabsTrigger value="community" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Community
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Bonus Points Info */}
-      <Card className="mb-8 bg-gradient-to-r from-yellow-500/5 to-orange-500/5 border-yellow-500/20">
-        <CardContent className="py-4">
-          <h3 className="font-semibold flex items-center gap-2 mb-3">
-            <span>🎁</span> Earn Bonus Points
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-start gap-2">
-              <span className="text-lg">🌅</span>
-              <div>
-                <div className="font-medium">Early Bird</div>
-                <div className="text-muted-foreground">+10 pts for completing within the first hour</div>
+        {/* Official Challenges Tab */}
+        <TabsContent value="official" className="space-y-8">
+          {/* Today's Challenge */}
+          {todayChallenge ? (
+            <div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="animate-pulse">🎯</span> Today&apos;s Challenge
+              </h2>
+              <div className="max-w-2xl">
+                <ChallengeCard
+                  challenge={todayChallenge}
+                  isToday={true}
+                  isCompleted={completionMap.has(todayChallenge.id)}
+                  pointsEarned={
+                    completionMap.has(todayChallenge.id)
+                      ? completionMap.get(todayChallenge.id)!.points +
+                        completionMap.get(todayChallenge.id)!.bonus
+                      : undefined
+                  }
+                />
               </div>
             </div>
-            <div className="flex items-start gap-2">
-              <span className="text-lg">🎯</span>
-              <div>
-                <div className="font-medium">Perfect Week</div>
-                <div className="text-muted-foreground">+50 pts for 7/7 challenges</div>
+          ) : (
+            <Card className="bg-muted/50">
+              <CardContent className="py-8 text-center">
+                <div className="text-4xl mb-3">📅</div>
+                <h3 className="text-lg font-semibold">No Challenge Today</h3>
+                <p className="text-muted-foreground">Check back tomorrow for a new challenge!</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Bonus Points Info */}
+          <Card className="bg-gradient-to-r from-yellow-500/5 to-orange-500/5 border-yellow-500/20">
+            <CardContent className="py-4">
+              <h3 className="font-semibold flex items-center gap-2 mb-3">
+                <span>🎁</span> Earn Bonus Points
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">🌅</span>
+                  <div>
+                    <div className="font-medium">Early Bird</div>
+                    <div className="text-muted-foreground">+10 pts for completing within the first hour</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">🎯</span>
+                  <div>
+                    <div className="font-medium">Perfect Week</div>
+                    <div className="text-muted-foreground">+50 pts for 7/7 challenges</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">🏅</span>
+                  <div>
+                    <div className="font-medium">Streak Milestones</div>
+                    <div className="text-muted-foreground">+25/100/500 pts at 7/30/100 days</div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-lg">🏅</span>
-              <div>
-                <div className="font-medium">Streak Milestones</div>
-                <div className="text-muted-foreground">+25/100/500 pts at 7/30/100 days</div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Past Challenges */}
-      {pastChallenges.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Past Challenges</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pastChallenges.map((challenge: Challenge) => (
-              <ChallengeCard
-                key={challenge.id}
-                challenge={challenge}
-                isCompleted={completionMap.has(challenge.id)}
-                pointsEarned={
-                  completionMap.has(challenge.id)
-                    ? completionMap.get(challenge.id)!.points +
-                      completionMap.get(challenge.id)!.bonus
-                    : undefined
-                }
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {(!allChallenges || allChallenges.length === 0) && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-3xl">🚀</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Challenges Coming Soon</h3>
-            <p className="text-muted-foreground">
-              Daily challenges will be available soon. Check back later!
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Community Challenges Section */}
-      <div className="mt-12">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-500" />
-              Community Challenges
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Challenges created by the community
-            </p>
-          </div>
-          <Link href="/challenges/create">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Plus className="w-4 h-4" />
-              Create Your Own
-            </Button>
-          </Link>
-        </div>
-
-        {communityChallenges && communityChallenges.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {communityChallenges.map((challenge: any) => (
-              <CommunityChallengeCard
-                key={challenge.id}
-                challenge={challenge}
-                isCompleted={communityCompletionMap.has(challenge.id)}
-                pointsEarned={communityCompletionMap.get(challenge.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="bg-muted/30">
-            <CardContent className="py-12 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/10 flex items-center justify-center">
-                <Users className="w-8 h-8 text-purple-500" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No Community Challenges Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Be the first to create a challenge for the community!
-              </p>
-              <Link href="/challenges/create">
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Challenge
-                </Button>
-              </Link>
             </CardContent>
           </Card>
-        )}
-      </div>
+
+          {/* Past Challenges */}
+          {pastChallenges.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Past Challenges</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pastChallenges.map((challenge: Challenge) => (
+                  <ChallengeCard
+                    key={challenge.id}
+                    challenge={challenge}
+                    isCompleted={completionMap.has(challenge.id)}
+                    pointsEarned={
+                      completionMap.has(challenge.id)
+                        ? completionMap.get(challenge.id)!.points +
+                          completionMap.get(challenge.id)!.bonus
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty State for Official Challenges */}
+          {(!allChallenges || allChallenges.length === 0) && (
+            <Card className="text-center py-12">
+              <CardContent>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <Trophy className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Daily Challenges Coming Soon</h3>
+                <p className="text-muted-foreground">
+                  Official daily challenges will be available soon. Check back later!
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Community Challenges Tab */}
+        <TabsContent value="community" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-500" />
+                Community Challenges
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Challenges created by the community
+              </p>
+            </div>
+            <Link href="/challenges/create">
+              <Button variant="default" className="gap-2">
+                <Plus className="w-4 h-4" />
+                Create Challenge
+              </Button>
+            </Link>
+          </div>
+
+          {communityChallenges && communityChallenges.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {communityChallenges.map((challenge: any) => (
+                <CommunityChallengeCard
+                  key={challenge.id}
+                  challenge={challenge}
+                  isCompleted={communityCompletionMap.has(challenge.id)}
+                  pointsEarned={communityCompletionMap.get(challenge.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-muted/30">
+              <CardContent className="py-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/10 flex items-center justify-center">
+                  <Users className="w-8 h-8 text-purple-500" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No Community Challenges Yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Be the first to create a challenge for the community!
+                </p>
+                <Link href="/challenges/create">
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Challenge
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
