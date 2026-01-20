@@ -70,25 +70,33 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
         .order('created_at', { ascending: true });
 
       if (history && history.length > 0) {
-        // Has history - load it and show "welcome back" message
+        // Has history - this is a returning user
+        setHasHistory(true);
+        
+        // Filter out welcome messages
+        const filteredHistory = history.filter((msg) => {
+          const content = msg.content || '';
+          
+          // Skip old welcome messages
+          if (msg.role === 'assistant' && (
+            content.includes("Hey there! I'm **Sol**, your personal coding tutor") ||
+            (content.includes("I'm here to guide you through building") && content.includes("step by step. I'll:"))
+          )) {
+            return false;
+          }
+          
+          return true;
+        });
+        
+        // Note: introducedLessons will be set in the useEffect when hasHistory is true
+        // This prevents re-firing intros for the current lesson on return visits
+        
+        // Show "welcome back" message at the end
         const welcomeBack = {
           id: 'welcome-back',
           role: 'assistant' as const,
           content: `👋 **Welcome back!** Ready to continue building **${project.name}**?\n\nI remember where we left off. Click a lesson on the left to jump back in, or ask me anything!`,
         };
-        
-        // Filter out any old welcome messages that were previously saved to DB
-        const filteredHistory = history.filter((msg) => {
-          const content = msg.content || '';
-          // Skip old welcome messages (check for distinctive phrases)
-          if (msg.role === 'assistant' && (
-            content.includes("Hey there! I'm **Sol**, your personal coding tutor") ||
-            content.includes("I'm here to guide you through building") && content.includes("step by step. I'll:")
-          )) {
-            return false;
-          }
-          return true;
-        });
         
         const loadedMessages = filteredHistory.map((msg, index) => ({
           id: msg.id || `msg-${index}`,
@@ -98,19 +106,6 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
         
         // Put history first, then welcome back at the end (newest)
         setMessages([...loadedMessages, welcomeBack]);
-        setHasHistory(true);
-        
-        // Count existing hint requests per lesson to restore hint levels
-        const hintPattern = /hint request #(\d+)/i;
-        const counts: Record<string, number> = {};
-        history.forEach((msg) => {
-          const match = msg.content.match(hintPattern);
-          if (match) {
-            // We can't easily know which lesson it was for, so we'll just track globally for now
-            // A better approach would be to store lesson_id with the message
-          }
-        });
-        setHintCounts(counts);
       } else {
         // No history - show first-time welcome (don't save to DB, it's just a greeting)
         const welcome = {
@@ -181,16 +176,31 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
     }
   }, [introducedLessons, loadingIntro, project, setMessages, supabase]);
 
-  // Trigger lesson intro when lesson changes
+  // Trigger lesson intro when lesson changes (but not for returning users on their current lesson)
   useEffect(() => {
-    if (currentLesson && !introducedLessons.has(currentLesson.id)) {
-      // Small delay to let the user see the lesson selection
-      const timer = setTimeout(() => {
-        fetchLessonIntro(currentLesson);
-      }, 500);
-      return () => clearTimeout(timer);
+    // Don't fire intro if:
+    // 1. No current lesson
+    // 2. Lesson already introduced
+    // 3. Still loading history (hasHistory === null)
+    // 4. User has history and this is the initial load (they've seen this before)
+    if (!currentLesson || introducedLessons.has(currentLesson.id) || hasHistory === null) {
+      return;
     }
-  }, [currentLesson, introducedLessons, fetchLessonIntro]);
+    
+    // If user has history, they're returning - don't auto-fire lesson intro on initial load
+    // They can click a lesson to get an intro for NEW lessons
+    if (hasHistory && introducedLessons.size === 0) {
+      // Mark current lesson as "introduced" since they've been here before
+      setIntroducedLessons(prev => new Set(prev).add(currentLesson.id));
+      return;
+    }
+    
+    // Small delay to let the user see the lesson selection
+    const timer = setTimeout(() => {
+      fetchLessonIntro(currentLesson);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [currentLesson, introducedLessons, fetchLessonIntro, hasHistory]);
 
   // Save user message to database before sending
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
