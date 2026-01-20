@@ -10,6 +10,7 @@ import { ContractInteraction } from '@/components/wallet/ContractInteraction';
 import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ExportButton } from '@/components/editor/ExportButton';
+import ProjectExportButton from '@/components/project/ExportButton';
 import { CodeExplanations } from '@/components/editor/CodeExplanations';
 import { CodeReview } from '@/components/editor/CodeReview';
 import { VersionHistory, saveCodeVersion } from '@/components/editor/VersionHistory';
@@ -914,6 +915,14 @@ contract ${contractName} {
               files={files}
               currentCode={code}
               activeFileName={activeFile?.filename}
+            />
+            <ProjectExportButton
+              projectId={project.id}
+              projectName={project.name}
+              variant="outline"
+              size="sm"
+              showText={false}
+              className="ml-1"
             />
             <Link href={`/projects/${project.id}/deployments`}>
               <Button variant="outline" size="sm" className="gap-2">
