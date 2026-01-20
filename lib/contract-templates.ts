@@ -926,6 +926,405 @@ contract NFTMarketplace is Ownable, ReentrancyGuard {
         platformFeePercent = _feePercent;
     }
 }`
+  },
+  {
+    id: 'vesting',
+    name: 'Token Vesting',
+    description: 'Lock tokens and release them gradually over time. Perfect for team allocations, investor lockups, or scheduled token distributions.',
+    category: 'DeFi',
+    difficulty: 'Intermediate',
+    icon: '⏳',
+    features: ['Linear Vesting', 'Cliff Period', 'Revocable', 'Multiple Beneficiaries'],
+    code: `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+contract TokenVesting is Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
+    struct VestingSchedule {
+        address beneficiary;
+        uint256 totalAmount;
+        uint256 releasedAmount;
+        uint256 startTime;
+        uint256 cliffDuration;
+        uint256 vestingDuration;
+        bool revocable;
+        bool revoked;
+    }
+
+    IERC20 public token;
+    uint256 public vestingScheduleCount;
+    
+    mapping(uint256 => VestingSchedule) public vestingSchedules;
+    mapping(address => uint256[]) public beneficiarySchedules;
+
+    event VestingCreated(uint256 indexed scheduleId, address indexed beneficiary, uint256 amount);
+    event TokensReleased(uint256 indexed scheduleId, address indexed beneficiary, uint256 amount);
+    event VestingRevoked(uint256 indexed scheduleId, uint256 refundAmount);
+
+    constructor(address _token) Ownable(msg.sender) {
+        token = IERC20(_token);
+    }
+
+    function createVestingSchedule(
+        address beneficiary,
+        uint256 amount,
+        uint256 cliffDays,
+        uint256 vestingDays,
+        bool revocable
+    ) external onlyOwner returns (uint256) {
+        require(beneficiary != address(0), "Invalid beneficiary");
+        require(amount > 0, "Amount must be > 0");
+        require(vestingDays > 0, "Vesting duration must be > 0");
+        require(cliffDays <= vestingDays, "Cliff > vesting duration");
+
+        token.safeTransferFrom(msg.sender, address(this), amount);
+
+        vestingScheduleCount++;
+        vestingSchedules[vestingScheduleCount] = VestingSchedule({
+            beneficiary: beneficiary,
+            totalAmount: amount,
+            releasedAmount: 0,
+            startTime: block.timestamp,
+            cliffDuration: cliffDays * 1 days,
+            vestingDuration: vestingDays * 1 days,
+            revocable: revocable,
+            revoked: false
+        });
+
+        beneficiarySchedules[beneficiary].push(vestingScheduleCount);
+
+        emit VestingCreated(vestingScheduleCount, beneficiary, amount);
+        return vestingScheduleCount;
+    }
+
+    function release(uint256 scheduleId) external nonReentrant {
+        VestingSchedule storage schedule = vestingSchedules[scheduleId];
+        require(schedule.beneficiary == msg.sender, "Not beneficiary");
+        require(!schedule.revoked, "Schedule revoked");
+
+        uint256 releasable = _computeReleasable(schedule);
+        require(releasable > 0, "No tokens to release");
+
+        schedule.releasedAmount += releasable;
+        token.safeTransfer(schedule.beneficiary, releasable);
+
+        emit TokensReleased(scheduleId, schedule.beneficiary, releasable);
+    }
+
+    function revoke(uint256 scheduleId) external onlyOwner nonReentrant {
+        VestingSchedule storage schedule = vestingSchedules[scheduleId];
+        require(schedule.revocable, "Not revocable");
+        require(!schedule.revoked, "Already revoked");
+
+        uint256 releasable = _computeReleasable(schedule);
+        uint256 refund = schedule.totalAmount - schedule.releasedAmount - releasable;
+
+        schedule.revoked = true;
+
+        if (releasable > 0) {
+            schedule.releasedAmount += releasable;
+            token.safeTransfer(schedule.beneficiary, releasable);
+        }
+
+        if (refund > 0) {
+            token.safeTransfer(owner(), refund);
+        }
+
+        emit VestingRevoked(scheduleId, refund);
+    }
+
+    function _computeReleasable(VestingSchedule memory schedule) internal view returns (uint256) {
+        if (block.timestamp < schedule.startTime + schedule.cliffDuration) {
+            return 0;
+        }
+
+        uint256 elapsed = block.timestamp - schedule.startTime;
+        uint256 vested;
+
+        if (elapsed >= schedule.vestingDuration) {
+            vested = schedule.totalAmount;
+        } else {
+            vested = (schedule.totalAmount * elapsed) / schedule.vestingDuration;
+        }
+
+        return vested - schedule.releasedAmount;
+    }
+
+    function getReleasable(uint256 scheduleId) external view returns (uint256) {
+        return _computeReleasable(vestingSchedules[scheduleId]);
+    }
+
+    function getBeneficiarySchedules(address beneficiary) external view returns (uint256[] memory) {
+        return beneficiarySchedules[beneficiary];
+    }
+}`
+  },
+  {
+    id: 'simple-swap',
+    name: 'Simple Token Swap',
+    description: 'A basic decentralized exchange for swapping between two ERC-20 tokens using a constant product formula (x*y=k). Great for learning AMM mechanics.',
+    category: 'DeFi',
+    difficulty: 'Advanced',
+    icon: '🔄',
+    features: ['Liquidity Pools', 'Constant Product AMM', 'LP Tokens', 'Swap Fee'],
+    code: `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+contract SimpleSwap is ERC20, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
+    IERC20 public tokenA;
+    IERC20 public tokenB;
+    
+    uint256 public reserveA;
+    uint256 public reserveB;
+    uint256 public constant FEE_PERCENT = 3; // 0.3% fee (3/1000)
+
+    event LiquidityAdded(address indexed provider, uint256 amountA, uint256 amountB, uint256 lpTokens);
+    event LiquidityRemoved(address indexed provider, uint256 amountA, uint256 amountB, uint256 lpTokens);
+    event Swap(address indexed user, address tokenIn, uint256 amountIn, uint256 amountOut);
+
+    constructor(
+        address _tokenA,
+        address _tokenB,
+        string memory lpName,
+        string memory lpSymbol
+    ) ERC20(lpName, lpSymbol) {
+        require(_tokenA != _tokenB, "Identical tokens");
+        tokenA = IERC20(_tokenA);
+        tokenB = IERC20(_tokenB);
+    }
+
+    function addLiquidity(uint256 amountA, uint256 amountB) external nonReentrant returns (uint256 lpTokens) {
+        require(amountA > 0 && amountB > 0, "Amounts must be > 0");
+
+        if (totalSupply() == 0) {
+            // First liquidity provider sets the ratio
+            lpTokens = sqrt(amountA * amountB);
+        } else {
+            // Subsequent providers must match the ratio
+            uint256 lpFromA = (amountA * totalSupply()) / reserveA;
+            uint256 lpFromB = (amountB * totalSupply()) / reserveB;
+            lpTokens = lpFromA < lpFromB ? lpFromA : lpFromB;
+        }
+
+        require(lpTokens > 0, "Insufficient liquidity minted");
+
+        tokenA.safeTransferFrom(msg.sender, address(this), amountA);
+        tokenB.safeTransferFrom(msg.sender, address(this), amountB);
+
+        reserveA += amountA;
+        reserveB += amountB;
+
+        _mint(msg.sender, lpTokens);
+        emit LiquidityAdded(msg.sender, amountA, amountB, lpTokens);
+    }
+
+    function removeLiquidity(uint256 lpTokens) external nonReentrant returns (uint256 amountA, uint256 amountB) {
+        require(lpTokens > 0, "LP tokens must be > 0");
+        require(balanceOf(msg.sender) >= lpTokens, "Insufficient LP tokens");
+
+        amountA = (lpTokens * reserveA) / totalSupply();
+        amountB = (lpTokens * reserveB) / totalSupply();
+
+        require(amountA > 0 && amountB > 0, "Insufficient liquidity burned");
+
+        _burn(msg.sender, lpTokens);
+
+        reserveA -= amountA;
+        reserveB -= amountB;
+
+        tokenA.safeTransfer(msg.sender, amountA);
+        tokenB.safeTransfer(msg.sender, amountB);
+
+        emit LiquidityRemoved(msg.sender, amountA, amountB, lpTokens);
+    }
+
+    function swapAForB(uint256 amountIn) external nonReentrant returns (uint256 amountOut) {
+        require(amountIn > 0, "Amount must be > 0");
+        amountOut = getAmountOut(amountIn, reserveA, reserveB);
+        require(amountOut > 0, "Insufficient output");
+
+        tokenA.safeTransferFrom(msg.sender, address(this), amountIn);
+        tokenB.safeTransfer(msg.sender, amountOut);
+
+        reserveA += amountIn;
+        reserveB -= amountOut;
+
+        emit Swap(msg.sender, address(tokenA), amountIn, amountOut);
+    }
+
+    function swapBForA(uint256 amountIn) external nonReentrant returns (uint256 amountOut) {
+        require(amountIn > 0, "Amount must be > 0");
+        amountOut = getAmountOut(amountIn, reserveB, reserveA);
+        require(amountOut > 0, "Insufficient output");
+
+        tokenB.safeTransferFrom(msg.sender, address(this), amountIn);
+        tokenA.safeTransfer(msg.sender, amountOut);
+
+        reserveB += amountIn;
+        reserveA -= amountOut;
+
+        emit Swap(msg.sender, address(tokenB), amountIn, amountOut);
+    }
+
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) public pure returns (uint256) {
+        require(amountIn > 0 && reserveIn > 0 && reserveOut > 0, "Invalid reserves");
+        
+        uint256 amountInWithFee = amountIn * (1000 - FEE_PERCENT);
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
+        
+        return numerator / denominator;
+    }
+
+    function getReserves() external view returns (uint256, uint256) {
+        return (reserveA, reserveB);
+    }
+
+    function sqrt(uint256 y) internal pure returns (uint256 z) {
+        if (y > 3) {
+            z = y;
+            uint256 x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+}`
+  },
+  {
+    id: 'timelock',
+    name: 'Timelock Controller',
+    description: 'Add time delays to contract operations for enhanced security. Essential for DAO governance and admin actions that require a waiting period.',
+    category: 'Utility',
+    difficulty: 'Intermediate',
+    icon: '⏰',
+    features: ['Scheduled Execution', 'Minimum Delay', 'Cancellation', 'Role-based Access'],
+    code: `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Timelock is Ownable {
+    uint256 public constant MIN_DELAY = 1 days;
+    uint256 public constant MAX_DELAY = 30 days;
+    uint256 public constant GRACE_PERIOD = 14 days;
+
+    mapping(bytes32 => bool) public queuedTransactions;
+    
+    uint256 public delay;
+
+    event TransactionQueued(
+        bytes32 indexed txHash,
+        address indexed target,
+        uint256 value,
+        bytes data,
+        uint256 executeTime
+    );
+    event TransactionExecuted(
+        bytes32 indexed txHash,
+        address indexed target,
+        uint256 value,
+        bytes data
+    );
+    event TransactionCancelled(bytes32 indexed txHash);
+    event DelayUpdated(uint256 oldDelay, uint256 newDelay);
+
+    constructor(uint256 _delay) Ownable(msg.sender) {
+        require(_delay >= MIN_DELAY && _delay <= MAX_DELAY, "Invalid delay");
+        delay = _delay;
+    }
+
+    function queueTransaction(
+        address target,
+        uint256 value,
+        bytes calldata data
+    ) external onlyOwner returns (bytes32) {
+        uint256 executeTime = block.timestamp + delay;
+        bytes32 txHash = keccak256(abi.encode(target, value, data, executeTime));
+        
+        require(!queuedTransactions[txHash], "Already queued");
+        queuedTransactions[txHash] = true;
+
+        emit TransactionQueued(txHash, target, value, data, executeTime);
+        return txHash;
+    }
+
+    function executeTransaction(
+        address target,
+        uint256 value,
+        bytes calldata data,
+        uint256 executeTime
+    ) external payable onlyOwner returns (bytes memory) {
+        bytes32 txHash = keccak256(abi.encode(target, value, data, executeTime));
+        
+        require(queuedTransactions[txHash], "Not queued");
+        require(block.timestamp >= executeTime, "Too early");
+        require(block.timestamp <= executeTime + GRACE_PERIOD, "Tx expired");
+
+        queuedTransactions[txHash] = false;
+
+        (bool success, bytes memory result) = target.call{value: value}(data);
+        require(success, "Tx failed");
+
+        emit TransactionExecuted(txHash, target, value, data);
+        return result;
+    }
+
+    function cancelTransaction(
+        address target,
+        uint256 value,
+        bytes calldata data,
+        uint256 executeTime
+    ) external onlyOwner {
+        bytes32 txHash = keccak256(abi.encode(target, value, data, executeTime));
+        
+        require(queuedTransactions[txHash], "Not queued");
+        queuedTransactions[txHash] = false;
+
+        emit TransactionCancelled(txHash);
+    }
+
+    function setDelay(uint256 _delay) external {
+        require(msg.sender == address(this), "Must be called via timelock");
+        require(_delay >= MIN_DELAY && _delay <= MAX_DELAY, "Invalid delay");
+        
+        uint256 oldDelay = delay;
+        delay = _delay;
+        
+        emit DelayUpdated(oldDelay, _delay);
+    }
+
+    function getTransactionHash(
+        address target,
+        uint256 value,
+        bytes calldata data,
+        uint256 executeTime
+    ) external pure returns (bytes32) {
+        return keccak256(abi.encode(target, value, data, executeTime));
+    }
+
+    function isQueued(bytes32 txHash) external view returns (bool) {
+        return queuedTransactions[txHash];
+    }
+
+    receive() external payable {}
+}`
   }
 ];
 
