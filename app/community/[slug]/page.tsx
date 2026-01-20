@@ -80,6 +80,39 @@ export default async function CommunityPage({ params }: Props) {
     .order('joined_at', { ascending: true })
     .limit(20);
 
+  // Fetch discussions with author profiles and reply counts
+  const { data: discussions } = await supabase
+    .from('discussions')
+    .select(`
+      *,
+      profiles:author_id!inner (
+        display_name
+      ),
+      lessons (
+        id,
+        title,
+        order
+      )
+    `)
+    .eq('community_id', community.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  // Add reply counts to discussions
+  const discussionsWithCounts = await Promise.all(
+    (discussions || []).map(async (discussion) => {
+      const { count } = await supabase
+        .from('discussion_replies')
+        .select('id', { count: 'exact' })
+        .eq('discussion_id', discussion.id);
+      
+      return {
+        ...discussion,
+        reply_count: count || 0
+      };
+    })
+  );
+
   // Check if user is a member
   let isMember = false;
   if (user) {
@@ -96,6 +129,7 @@ export default async function CommunityPage({ params }: Props) {
     <CommunityPageClient
       community={community}
       posts={posts || []}
+      discussions={discussionsWithCounts}
       members={members || []}
       isMember={isMember}
       isAuthenticated={!!user}

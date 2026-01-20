@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { PostCard } from '@/components/community/PostCard';
 import { CreatePostButton } from '@/components/community/CreatePostButton';
+import { AskQuestionButton } from '@/components/community/AskQuestionButton';
+import { DiscussionCard } from '@/components/community/DiscussionCard';
 import { MembersSidebar } from '@/components/community/MembersSidebar';
 import { ChatRoom, ChatFloatingButton } from '@/components/community/ChatRoom';
 import { Button } from '@/components/ui/button';
@@ -39,6 +41,26 @@ interface Post {
   } | null;
 }
 
+interface Discussion {
+  id: string;
+  title: string;
+  content: string;
+  lesson_id: string | null;
+  is_question: boolean;
+  is_answered: boolean;
+  upvotes: number;
+  created_at: string;
+  profiles: {
+    display_name: string | null;
+  } | null;
+  lessons?: {
+    id: string;
+    title: string;
+    order: number;
+  } | null;
+  reply_count: number;
+}
+
 interface Member {
   user_id: string;
   role: 'member' | 'moderator' | 'admin';
@@ -52,6 +74,7 @@ interface Member {
 interface CommunityPageClientProps {
   community: Community;
   posts: Post[];
+  discussions: Discussion[];
   members: Member[];
   isMember: boolean;
   isAuthenticated: boolean;
@@ -61,6 +84,7 @@ interface CommunityPageClientProps {
 export function CommunityPageClient({
   community,
   posts,
+  discussions,
   members,
   isMember: initialIsMember,
   isAuthenticated,
@@ -182,17 +206,27 @@ export function CommunityPageClient({
             {/* Actions Bar */}
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Discussions</h2>
-              <CreatePostButton
-                communityId={community.id}
-                communitySlug={community.slug}
-                isMember={isMember}
-              />
+              <div className="flex items-center gap-2">
+                <AskQuestionButton
+                  communitySlug={community.slug}
+                  isMember={isMember}
+                />
+                <CreatePostButton
+                  communityId={community.id}
+                  communitySlug={community.slug}
+                  isMember={isMember}
+                />
+              </div>
             </div>
 
             {/* Tabs */}
             <Tabs defaultValue="all" className="w-full">
               <TabsList>
                 <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="qa" className="gap-1">
+                  <HelpCircle className="h-3 w-3" />
+                  Q&A ({discussions.length})
+                </TabsTrigger>
                 <TabsTrigger value="discussions" className="gap-1">
                   <MessageSquare className="h-3 w-3" />
                   Discussions
@@ -208,8 +242,17 @@ export function CommunityPageClient({
               </TabsList>
 
               <TabsContent value="all" className="space-y-4 mt-4">
+                {discussions.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">Recent Q&A</h3>
+                    {discussions.slice(0, 3).map((discussion) => (
+                      <DiscussionCard key={discussion.id} discussion={discussion} communitySlug={community.slug} />
+                    ))}
+                  </div>
+                )}
                 {pinnedPosts.length > 0 && (
                   <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">Pinned Posts</h3>
                     {pinnedPosts.map((post) => (
                       <PostCard key={post.id} post={post} communitySlug={community.slug} />
                     ))}
@@ -217,13 +260,26 @@ export function CommunityPageClient({
                 )}
                 {regularPosts.length > 0 ? (
                   <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">Community Posts</h3>
                     {regularPosts.map((post) => (
                       <PostCard key={post.id} post={post} communitySlug={community.slug} />
                     ))}
                   </div>
-                ) : pinnedPosts.length === 0 ? (
+                ) : pinnedPosts.length === 0 && discussions.length === 0 ? (
                   <EmptyState isMember={isMember} />
                 ) : null}
+              </TabsContent>
+
+              <TabsContent value="qa" className="space-y-4 mt-4">
+                {discussions.length > 0 ? (
+                  <div className="space-y-3">
+                    {discussions.map((discussion) => (
+                      <DiscussionCard key={discussion.id} discussion={discussion} communitySlug={community.slug} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState isMember={isMember} type="questions" />
+                )}
               </TabsContent>
 
               <TabsContent value="discussions" className="space-y-4 mt-4">
