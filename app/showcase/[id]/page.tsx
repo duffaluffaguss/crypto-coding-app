@@ -259,17 +259,22 @@ export default async function ShowcaseProjectPage({
                 <CardTitle className="text-lg">Creator</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Link 
+                  href={`/profile/${project.profiles?.id}`}
+                  className="flex items-center gap-3 group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:ring-2 group-hover:ring-primary/50 transition-all">
                     <span className="text-primary font-medium">
                       {(project.profiles?.display_name || 'A')[0].toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <div className="font-medium">{project.profiles?.display_name || 'Anonymous'}</div>
-                    <div className="text-sm text-muted-foreground">Community Member</div>
+                    <div className="font-medium group-hover:text-primary transition-colors">
+                      {project.profiles?.display_name || 'Anonymous'}
+                    </div>
+                    <div className="text-sm text-muted-foreground">View Profile →</div>
                   </div>
-                </div>
+                </Link>
               </CardContent>
             </Card>
           </div>

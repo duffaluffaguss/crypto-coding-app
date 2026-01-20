@@ -71,7 +71,9 @@ export default async function ShowcasePage({
       likes_count,
       created_at,
       contract_address,
+      user_id,
       profiles (
+        id,
         display_name
       )
     `)

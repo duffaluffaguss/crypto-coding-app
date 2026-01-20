@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { StreakDisplay } from '@/components/gamification/StreakDisplay';
+import { UserAvatarDropdown } from '@/components/profile/UserAvatarDropdown';
 
 export default async function DashboardLayout({
   children,
@@ -49,17 +50,10 @@ export default async function DashboardLayout({
           </div>
           <div className="flex items-center gap-4">
             <StreakDisplay />
-            <span className="text-sm text-muted-foreground">
-              {profile?.display_name || user.email}
-            </span>
-            <form action="/api/auth/signout" method="post">
-              <button
-                type="submit"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Sign out
-              </button>
-            </form>
+            <UserAvatarDropdown 
+              displayName={profile?.display_name} 
+              email={user.email} 
+            />
           </div>
         </div>
       </nav>
