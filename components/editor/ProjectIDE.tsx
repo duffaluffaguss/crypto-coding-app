@@ -15,6 +15,7 @@ import { VersionHistory, saveCodeVersion } from '@/components/editor/VersionHist
 import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
 import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
 import { DeploymentHistory } from '@/components/deployments';
+import { SubmitTemplateModal } from '@/components/templates/SubmitTemplateModal';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -58,6 +59,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [showExplanations, setShowExplanations] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [versionCount, setVersionCount] = useState<number>(0);
+  const [showSubmitTemplate, setShowSubmitTemplate] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const editorRef = useRef<any>(null);
   const supabase = createClient();
@@ -869,6 +871,18 @@ contract ${contractName} {
                     </>
                   )}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setShowSubmitTemplate(true)}
+                  title="Share your code as a community template"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Submit as Template
+                </Button>
               </>
             )}
             <div className="w-px h-6 bg-border mx-1" />
@@ -1052,6 +1066,23 @@ contract ${contractName} {
           }}
         />
       )}
+
+      {/* Submit Template Modal */}
+      <SubmitTemplateModal
+        isOpen={showSubmitTemplate}
+        onClose={() => setShowSubmitTemplate(false)}
+        onSubmit={() => setShowSubmitTemplate(false)}
+        initialCode={{
+          [activeFile?.filename || 'main.sol']: code,
+          ...files.reduce((acc, file) => {
+            if (file.filename !== activeFile?.filename) {
+              acc[file.filename] = file.content;
+            }
+            return acc;
+          }, {} as Record<string, string>)
+        }}
+        initialProjectType={project.project_type}
+      />
 
       {/* Onboarding Tour */}
       <OnboardingTour 
