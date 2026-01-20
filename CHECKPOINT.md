@@ -1,182 +1,142 @@
-# Crypto Coding App - Development Checkpoint
-
-> This file tracks current progress and next steps. Updated after each feature/fix.
-
-## Last Updated: 2026-01-19 (Session 2)
-
----
-
-## ✅ Completed Features
-
-### Phase 1-4: Core MVP + Content (Sessions 1-4)
-- Landing page, Auth, Onboarding quiz
-- Monaco code editor + AI tutor chat
-- Lesson sidebar with progress tracking
-- Solidity compiler integration
-- Wallet connect + Deploy to Base Sepolia
-- Streaming AI responses
-- Hint system (3 levels)
-- Streak tracking
-- 52 lessons across 6 project types (token, nft, dao, game, social, creator)
-
-### Phase 5: Frontend Builder (Partial)
-- AI-generated React components for contracts
-- Contract ABI storage
-- FrontendGenerator component with preview/download
-
-### Phase 6: Production Deployment
-- Deployed to Vercel: https://crypto-coding-app.vercel.app
-- Environment variables configured
-
-### Session 5 (2026-01-18)
-- ✅ Legal guardrails (no gambling, betting, securities)
-- ✅ Home button in onboarding
-- ✅ Back buttons on pages  
-- ✅ Better project suggestions
-
-### Session 6 (2026-01-19)
-- ✅ Code Verification Feature (Verify & Continue flow)
-- ✅ Auto-save progress (saves 2 seconds after typing stops)
-- ✅ Save status indicator in toolbar (Saved/Saving/Unsaved)
-- ✅ "Learn Crypto" educational modal with 4 tabs:
-  - Welcome to the Future of Building
-  - Blockchain in 60 Seconds
-  - The Story So Far (history)
-  - What You Can Build (possibilities)
-- ✅ Learn button added to IDE toolbar and Dashboard
-- ✅ Google OAuth login/signup (Continue with Google)
-- ✅ Wallet Education flow (5-step interactive tutorial):
-  - What is a Wallet?
-  - History of Wallets
-  - Security Basics
-  - Recovery Options
-  - Ready to Connect!
-- ✅ User wallet address storage (saves to user_profiles table)
-- ✅ Database migration for user wallet data
-- ✅ AI Tutor input: Auto-expanding textarea with text wrap
-- ✅ Compilation output: Custom scrollbar styling
-- ✅ **Wallet Privacy (STRICT RLS)**:
-  - FORCE ROW LEVEL SECURITY enabled
-  - Users can ONLY access their own wallet data
-  - No anon/public access allowed
-  - Masked view for admin queries (shows only first 6 + last 4 chars)
+# CHECKPOINT - Session 7
+**Date:** 2026-01-20 02:00 CST
+**Commits this session:** 39+
+**Agents deployed:** 40+
 
 ---
 
-## ✅ Recently Completed
+## ✅ COMPLETED & PUSHED
 
-### Code Verification Feature
-- [x] `/api/verify-code/route.ts` - Compiles code + AI summarizes
-- [x] `VerificationModal.tsx` - Shows summary + "Yes, Continue" confirmation
-- [x] `VerificationErrorModal.tsx` - Shows compile errors
-- [x] `LessonSidebar.tsx` - "Verify & Continue" button
-- [x] `ProjectIDE.tsx` - Passes `currentCode` prop
+### Core Fixes
+- [x] AI hint button fix
+- [x] Progressive hints (4 levels)
+- [x] Welcome back messages
+- [x] Build fixes (prettier-plugin-solidity)
 
-### Auto-Save Progress
-- [x] Code auto-saves 2 seconds after user stops typing
-- [x] Save status indicator in toolbar (Saved/Saving/Unsaved with icons)
-- [x] Uses debounced save with useCallback/useRef
+### Mobile & UX
+- [x] Mobile responsive IDE
+- [x] Prettier code formatting
+- [x] Keyboard shortcuts (Ctrl+S, Ctrl+B, Ctrl+Shift+F)
+- [x] PWA support (installable)
+- [x] Loading skeletons
+- [x] Onboarding tour (5 steps)
+- [x] Global search (Cmd+K)
 
-### Learn Crypto Educational Content
-- [x] `LearnModal.tsx` - 4-tab educational modal
-- [x] Welcome tab - Exciting intro to building on blockchain
-- [x] Blockchain tab - Simple analogy explanation
-- [x] History tab - Bitcoin → Ethereum → Now timeline
-- [x] Possibilities tab - What creators/gamers/entrepreneurs can build
-- [x] Added to IDE toolbar and Dashboard page
+### Deployment & Monitoring
+- [x] Base Mainnet deployment option
+- [x] Vercel Analytics + Speed Insights
+- [x] Sentry error monitoring
+- [x] GitHub Actions CI/CD
+- [x] SEO meta tags
 
-### Google OAuth
-- [x] Login page - "Continue with Google" button
-- [x] Signup page - "Continue with Google" button
-- [x] Redirects through Supabase OAuth flow
+### Gamification
+- [x] Achievement system (17 badges)
+- [x] Streak display + calendar
+- [x] Leaderboard (points/streak/lessons)
+- [x] Daily challenges
+- [x] Referral system
 
-### Wallet Education & User Wallets
-- [x] `WalletEducation.tsx` - 5-step interactive wallet tutorial
-- [x] Shows automatically on first wallet connection
-- [x] Covers: basics, history, security, recovery
-- [x] Stores wallet address in `user_profiles` table
-- [x] Database migration: `004_user_wallets.sql`
+### User Features
+- [x] User profiles
+- [x] Settings page
+- [x] Notifications (bell + real-time)
+- [x] Email notifications (4 templates)
+- [x] Certificates (completion)
+- [x] Social sharing (Twitter/LinkedIn + OG images)
 
-### Session 6 Continued
-- ✅ **Lesson Locking**: Lessons locked until previous lesson is verified
-- ✅ **"Verify" Badge**: Yellow badge on current lesson needing verification
-- ✅ **"Verify to unlock next" indicator**: Shows in Current Goal section
-- ✅ **Test Tokens Prompt**: Auto-shows when wallet has low balance
-- ✅ **Wallet Balance Display**: Shows ETH balance in toolbar with low balance warning
-- ✅ **Faucet Links**: Direct links to Coinbase, Alchemy, QuickNode faucets
-- ✅ **Dark Mode Toggle**: Light/Dark/System theme options
-- ✅ **Rate Limiting**: All AI + compile endpoints protected
-  - AI endpoints: 30 req/min
-  - Compile: 60 req/min
-  - Returns 429 with retry-after header
-- ✅ **Export Project as Zip**: Download full Hardhat project
-  - Includes contracts, README, package.json, hardhat.config
-  - Deploy script + .env.example for easy setup
+### Community
+- [x] Community showcase
+- [x] Like/Fork projects
+- [x] Contract templates (10 contracts)
+- [x] Code snippets library (20+ snippets)
+- [x] Feedback widget
 
-## 🚧 Setup Required (One-Time)
-- [ ] **Google OAuth**: Enable in Supabase Dashboard → Authentication → Providers → Google
-- [ ] **Run migration**: Execute `supabase/migrations/004_user_wallets.sql` in SQL Editor
-- [ ] **Vercel**: Redeploy after pushing to update production
+### Content & Help
+- [x] Help/FAQ page (14 FAQs + glossary)
+- [x] Custom error pages (404, 500)
+- [x] Changelog page + What's New badge
+- [x] AI code explanations
 
-### Session 7 (2026-01-20)
-- ✅ Fix AI hint button (use append() instead of setMessages())
-- ✅ Progressive hints (Level 1-4 get increasingly obvious)
-- ✅ Welcome back message for returning users (no duplicate welcome)
-- ✅ **Mobile Responsive IDE**:
-  - Bottom tab navigation: Code | Lessons | AI Tutor
-  - Compact mobile header
-  - Full-screen views for each section
-  - Selecting file/lesson auto-switches to code view
-- ✅ **Code formatting with Prettier**:
-  - Format button in desktop toolbar
-  - ✨ button on mobile header
-  - Uses prettier-plugin-solidity
-
-## 🚧 Potential Enhancements
-- [ ] Test full verification flow end-to-end
+### Admin
+- [x] Admin dashboard (partial)
 
 ---
 
-## 📋 Outstanding (Future)
+## 🔄 IN PROGRESS (Active Agents)
 
-### Phase 5 Remaining
-- [ ] No-code frontend builder (visual editor)
-- [ ] Preview deployed frontend
-- [ ] Custom domain support
+### Wave 4-5 (Compounding)
+- [ ] Profile customization (bio, social links)
+- [ ] Leaderboard v2 (weekly/monthly + leagues)
+- [ ] Video tutorials
+- [ ] Community templates
+- [ ] Challenge streaks
+- [ ] Announcements (in-app)
+- [ ] Activity feed
+- [ ] Follow system
+- [ ] Showcase comments
+- [ ] Bookmarks
+- [ ] Data export (GDPR)
+- [ ] Deployment history
+- [ ] Gas estimation
+- [ ] Version history
 
-### Phase 6 Remaining
-- [ ] Fix Supabase RLS policies for lessons table
-- [ ] Run migrations on production Supabase
-- [ ] Add Base Mainnet option
-- [ ] Analytics/tracking
-- [ ] Error monitoring (Sentry)
-- [x] Rate limiting for AI endpoints ✅
+### Wave 6 (NFT Certificates)
+- [ ] NFT smart contract
+- [ ] NFT minting UI
+- [ ] NFT metadata API
+- [ ] NFT gallery
+- [ ] NFT sharing
+- [ ] NFT designer
 
-### Nice to Have
-- [x] Dark mode toggle ✅
-- [x] Export project as zip ✅
-- [ ] Mobile responsive IDE
-- [ ] Code formatting (Prettier)
-- [ ] Git integration for projects
-- [ ] Community showcase page
+### Wave 7 (Testing & Features)
+- [ ] E2E tests (Playwright)
+- [ ] AI code review
+- [ ] Learning paths
+- [ ] Analytics dashboard
+- [ ] Discord bot
+- [ ] Job board
+- [ ] Challenge creator
+- [ ] Feature flags
 
 ---
 
-## 🔧 Technical Notes
+## 📊 DATABASE MIGRATIONS TO RUN
 
-### Key Files
-- **IDE**: `components/editor/ProjectIDE.tsx`
-- **Lessons**: `components/lessons/LessonSidebar.tsx`
-- **Compiler**: `app/api/compile/route.ts`
-- **AI Chat**: `app/api/ai/chat/route.ts`
+```
+004_user_wallets.sql
+005_showcase.sql
+006_lessons_rls.sql
+007_achievements.sql
+008_notifications.sql
+009_daily_challenges.sql
+010_feedback.sql
+011_referrals.sql
++ more from agents...
+```
 
-### Database
-- Supabase project ref: `kgtqycqllffknhuibyjs`
-- Tables: users, projects, project_files, lessons, learning_progress, chat_history, streaks
+---
 
-### Environment
-- Node.js + Next.js 14
-- Tailwind CSS
-- Supabase (auth + db)
-- Solidity compilation via solc-js
-- AI via @ai-sdk/anthropic
+## 🔑 ENV VARS NEEDED
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+GOOGLE_GENERATIVE_AI_API_KEY=
+SENTRY_DSN=
+RESEND_API_KEY=
+```
+
+---
+
+## 📈 NEXT STEPS
+
+1. Run all database migrations
+2. Enable Google OAuth
+3. Test full user flow
+4. Review & merge agent work
+5. Performance audit
+6. Launch!
+
+---
+
+*Last updated: 2026-01-20 02:00 CST*
