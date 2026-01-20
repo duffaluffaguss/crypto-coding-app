@@ -83,8 +83,8 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
           content: msg.content,
         }));
         
-        // Put welcome back at the start, then history
-        setMessages([welcomeBack, ...loadedMessages]);
+        // Put history first, then welcome back at the end (newest)
+        setMessages([...loadedMessages, welcomeBack]);
         setHasHistory(true);
         
         // Count existing hint requests per lesson to restore hint levels
