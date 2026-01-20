@@ -1,10 +1,17 @@
-import Link from 'next/link';
-import { Accordion, AccordionItem } from '@/components/help/Accordion';
+'use client';
 
-export const metadata = {
-  title: 'Help & FAQ | Zero to Crypto Dev',
-  description: 'Get help with Zero to Crypto Dev. Find answers to frequently asked questions about Web3 development, smart contracts, and our platform.',
-};
+import Link from 'next/link';
+import { useState } from 'react';
+import { Accordion, AccordionItem } from '@/components/help/Accordion';
+import { KeyboardShortcutsModal } from '@/components/help/KeyboardShortcutsModal';
+import {
+  KEYBOARD_SHORTCUTS,
+  SHORTCUT_CATEGORIES,
+  getGroupedShortcuts,
+  type ShortcutCategory,
+} from '@/lib/shortcuts';
+
+// Metadata moved to layout.tsx for client component compatibility
 
 const gettingStartedItems = [
   {
@@ -88,18 +95,7 @@ const faqItems = [
   },
 ];
 
-const keyboardShortcuts = [
-  { keys: 'Ctrl/Cmd + S', action: 'Save current file' },
-  { keys: 'Ctrl/Cmd + /', action: 'Toggle comment' },
-  { keys: 'Ctrl/Cmd + Z', action: 'Undo' },
-  { keys: 'Ctrl/Cmd + Shift + Z', action: 'Redo' },
-  { keys: 'Ctrl/Cmd + F', action: 'Find in file' },
-  { keys: 'Ctrl/Cmd + H', action: 'Find and replace' },
-  { keys: 'Ctrl/Cmd + D', action: 'Select next occurrence' },
-  { keys: 'Alt + Up/Down', action: 'Move line up/down' },
-  { keys: 'Ctrl/Cmd + Enter', action: 'Run/compile code' },
-  { keys: 'Escape', action: 'Close modal/panel' },
-];
+// Using centralized shortcuts from lib/shortcuts.ts
 
 const glossaryTerms = [
   { term: 'Blockchain', definition: 'A distributed, immutable ledger that records transactions across many computers. Once data is recorded, it cannot be altered.' },
@@ -121,6 +117,14 @@ const glossaryTerms = [
 ];
 
 export default function HelpPage() {
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const groupedShortcuts = getGroupedShortcuts();
+  
+  // Get a subset of important shortcuts for display
+  const displayShortcuts = KEYBOARD_SHORTCUTS.filter(s => 
+    ['save', 'undo', 'redo', 'comment', 'find', 'replace', 'compile', 'format', 'help', 'close-modal'].includes(s.id)
+  );
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-secondary">
       {/* Header */}
@@ -220,11 +224,11 @@ export default function HelpPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {keyboardShortcuts.map((shortcut, index) => (
-                    <tr key={index} className="hover:bg-muted/30 transition-colors">
+                  {displayShortcuts.map((shortcut) => (
+                    <tr key={shortcut.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
                         <kbd className="px-2 py-1 text-xs font-mono bg-muted rounded border border-border">
-                          {shortcut.keys}
+                          {shortcut.keys.windows.replace('Ctrl', 'Ctrl/Cmd')}
                         </kbd>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{shortcut.action}</td>
@@ -232,6 +236,20 @@ export default function HelpPage() {
                   ))}
                 </tbody>
               </table>
+              <div className="border-t border-border bg-muted/30 p-4 text-center">
+                <button
+                  onClick={() => setShowShortcutsModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  View All Shortcuts
+                </button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Or press <kbd className="px-1.5 py-0.5 text-xs font-mono bg-muted rounded border border-border">Ctrl/Cmd + ?</kbd> in the editor
+                </p>
+              </div>
             </div>
           </section>
 
@@ -378,6 +396,12 @@ export default function HelpPage() {
           <p>© 2026 Zero to Crypto Dev. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        open={showShortcutsModal}
+        onOpenChange={setShowShortcutsModal}
+      />
     </main>
   );
 }
