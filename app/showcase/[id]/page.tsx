@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { LikeButton } from '@/components/showcase/LikeButton';
 import { ForkButton } from '@/components/showcase/ForkButton';
 import { ShareButton } from '@/components/social';
+import { CommentSection } from '@/components/comments';
 import type { ProjectType } from '@/types';
 import type { Metadata } from 'next';
 
@@ -138,6 +139,23 @@ export default async function ShowcaseProjectPage({
     hasLiked = !!like;
   }
 
+  // Fetch comments
+  const { data: comments } = await supabase
+    .from('project_comments')
+    .select(`
+      id,
+      content,
+      created_at,
+      user_id,
+      profiles (
+        id,
+        display_name,
+        avatar_url
+      )
+    `)
+    .eq('project_id', id)
+    .order('created_at', { ascending: false });
+
   const mainFile = files?.find(f => f.file_type === 'solidity') || files?.[0];
 
   return (
@@ -221,6 +239,14 @@ export default async function ShowcaseProjectPage({
                 </CardContent>
               </Card>
             )}
+
+            {/* Comments Section */}
+            <CommentSection
+              projectId={project.id}
+              initialComments={comments || []}
+              isLoggedIn={!!user}
+              currentUserId={user?.id}
+            />
           </div>
 
           {/* Sidebar */}
