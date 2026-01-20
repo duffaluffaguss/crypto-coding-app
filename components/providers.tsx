@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes';
 import { useState, type ReactNode } from 'react';
 import { config } from '@/lib/wallet/config';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ThemeLoader } from '@/components/settings/ThemeLoader';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
+        <ThemeLoader />
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
             {children}

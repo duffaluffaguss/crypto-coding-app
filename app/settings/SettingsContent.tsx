@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useTheme } from 'next-themes';
 import { SettingsSection, SettingsItem } from '@/components/settings/SettingsSection';
+import { ThemeCustomizer } from '@/components/settings/ThemeCustomizer';
 import { DeleteAccountModal } from '@/components/settings/DeleteAccountModal';
 import { ExportDataButton } from '@/components/settings/ExportDataButton';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,6 @@ const defaultEmailPrefs: EmailPreferences = {
 };
 
 export function SettingsContent({ displayName, email }: SettingsContentProps) {
-  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [fontSize, setFontSize] = useState(14);
   const [emailPrefs, setEmailPrefs] = useState<EmailPreferences>(defaultEmailPrefs);
@@ -134,10 +133,10 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
         </div>
       </SettingsSection>
 
-      {/* Preferences Section */}
+      {/* Theme Customization Section */}
       <SettingsSection
-        title="Preferences"
-        description="Customize your experience"
+        title="Theme & Appearance"
+        description="Customize colors and visual preferences"
         icon={
           <svg
             className="w-5 h-5 text-primary"
@@ -149,43 +148,35 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+              d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a4 4 0 004-4V5z"
+            />
+          </svg>
+        }
+      >
+        <ThemeCustomizer />
+      </SettingsSection>
+
+      {/* Editor Preferences Section */}
+      <SettingsSection
+        title="Editor Preferences"
+        description="Customize your coding experience"
+        icon={
+          <svg
+            className="w-5 h-5 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
             />
           </svg>
         }
       >
         <div className="space-y-0">
-          <SettingsItem
-            label="Theme"
-            description="Choose your preferred color scheme"
-          >
-            <div className="flex gap-1">
-              <Button
-                variant={theme === 'light' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTheme('light')}
-                className="w-20"
-              >
-                ☀️ Light
-              </Button>
-              <Button
-                variant={theme === 'dark' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTheme('dark')}
-                className="w-20"
-              >
-                🌙 Dark
-              </Button>
-              <Button
-                variant={theme === 'system' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTheme('system')}
-                className="w-24"
-              >
-                💻 System
-              </Button>
-            </div>
-          </SettingsItem>
           <SettingsItem
             label="Editor Font Size"
             description="Adjust code editor text size (10-24px)"
