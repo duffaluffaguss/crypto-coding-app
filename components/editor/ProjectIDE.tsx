@@ -48,8 +48,36 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>('code');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [formatting, setFormatting] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const supabase = createClient();
+
+  // Format code with Prettier
+  const formatCode = async () => {
+    if (!code.trim()) return;
+    
+    setFormatting(true);
+    try {
+      const response = await fetch('/api/format', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.formatted) {
+        setCode(result.formatted);
+        setSaveStatus('unsaved'); // Mark as unsaved since code changed
+      } else {
+        console.error('Format error:', result.error);
+      }
+    } catch (error) {
+      console.error('Failed to format:', error);
+    } finally {
+      setFormatting(false);
+    }
+  };
 
   // Auto-save functionality - saves 2 seconds after user stops typing
   const autoSave = useCallback(async () => {
@@ -481,6 +509,9 @@ contract ${contractName} {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             )}
+            <Button variant="ghost" size="sm" onClick={formatCode} disabled={formatting} className="text-xs px-2">
+              {formatting ? '...' : '✨'}
+            </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} className="text-xs px-2">
               {compiling ? '...' : 'Compile'}
             </Button>
@@ -555,6 +586,19 @@ contract ${contractName} {
             </div>
             <Button variant="outline" size="sm" onClick={autoSave} disabled={saveStatus === 'saving' || saveStatus === 'saved'}>
               Save
+            </Button>
+            <Button variant="outline" size="sm" onClick={formatCode} disabled={formatting}>
+              {formatting ? (
+                <>
+                  <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Formatting...
+                </>
+              ) : (
+                'Format'
+              )}
             </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling}>
               {compiling ? (
