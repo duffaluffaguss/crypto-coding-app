@@ -7,6 +7,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import { OfflineBanner } from '@/components/common/OfflineIndicator';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -134,6 +135,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ServiceWorkerRegistration />
+        <OfflineBanner />
         <Providers>{children}</Providers>
         <InstallPrompt />
         <FeedbackWidget />
