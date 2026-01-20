@@ -2,6 +2,13 @@ import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { getCertificate, getCertificateNFTAddress, formatCompletionDate } from '@/lib/certificate-nft';
 import { baseSepolia, base } from 'viem/chains';
+import {
+  CertificateStyleConfig,
+  deserializeStyle,
+  getDefaultStyle,
+  generateGradientCSS,
+  ACCENT_COLORS,
+} from '@/lib/certificate-styles';
 
 export const runtime = 'edge';
 
@@ -26,6 +33,12 @@ const PROJECT_TYPE_LABELS: Record<string, string> = {
   creator: 'Creator Economy',
 };
 
+// Get secondary color for an accent color
+function getSecondaryColor(primary: string): string {
+  const found = ACCENT_COLORS.find((c) => c.color === primary);
+  return found?.secondary || '#C4B5FD';
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { tokenId: string } }
@@ -37,6 +50,14 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const chainIdParam = searchParams.get('chainId');
     const chainId = chainIdParam ? parseInt(chainIdParam) : baseSepolia.id;
+    
+    // Get custom style from query params
+    const styleParam = searchParams.get('style');
+    let customStyle: CertificateStyleConfig | null = null;
+    
+    if (styleParam) {
+      customStyle = deserializeStyle(styleParam);
+    }
 
     // Verify contract is deployed
     const contractAddress = getCertificateNFTAddress(chainId);
@@ -57,12 +78,37 @@ export async function GET(
     }
 
     const completionDate = formatCompletionDate(certificate.completionDate);
-    const colors = PROJECT_TYPE_COLORS[certificate.projectType] || { primary: '#8B5CF6', secondary: '#C4B5FD' };
     const projectTypeLabel = PROJECT_TYPE_LABELS[certificate.projectType] || certificate.projectType;
     const networkName = chainId === base.id ? 'Base Mainnet' : 'Base Sepolia';
     
     // Shorten the address for display
     const shortAddress = `${certificate.recipient.slice(0, 6)}...${certificate.recipient.slice(-4)}`;
+
+    // Determine colors - use custom style if available, otherwise project type defaults
+    const defaultColors = PROJECT_TYPE_COLORS[certificate.projectType] || { primary: '#8B5CF6', secondary: '#C4B5FD' };
+    const colors = customStyle 
+      ? { primary: customStyle.accentColor, secondary: getSecondaryColor(customStyle.accentColor) }
+      : defaultColors;
+    
+    // Generate background gradient
+    const bgGradient = customStyle 
+      ? generateGradientCSS(customStyle.background)
+      : `linear-gradient(145deg, #0a0a1a 0%, #1a1a3e 40%, ${colors.primary}22 100%)`;
+    
+    // Element visibility from custom style or defaults
+    const elements = customStyle?.elements || {
+      showDate: true,
+      showBadge: true,
+      showContractAddress: true,
+      showNetwork: true,
+      showCornerAccents: true,
+      showCertificateId: true,
+    };
+    
+    // Border settings
+    const borderWidth = customStyle?.border?.width || 3;
+    const borderType = customStyle?.border?.type || 'gradient';
+    const borderRadius = customStyle?.border?.radius || 24;
 
     return new ImageResponse(
       (
@@ -72,7 +118,7 @@ export async function GET(
             flexDirection: 'column',
             width: '100%',
             height: '100%',
-            background: `linear-gradient(145deg, #0a0a1a 0%, #1a1a3e 40%, ${colors.primary}22 100%)`,
+            background: bgGradient,
             padding: '40px',
             fontFamily: 'system-ui, sans-serif',
           }}
@@ -108,8 +154,8 @@ export async function GET(
               flexDirection: 'column',
               width: '100%',
               height: '100%',
-              border: `3px solid ${colors.primary}`,
-              borderRadius: '24px',
+              border: borderType === 'none' ? 'none' : `${borderWidth}px ${borderType === 'double' ? 'double' : 'solid'} ${colors.primary}`,
+              borderRadius: `${borderRadius}px`,
               background: 'rgba(10, 10, 26, 0.9)',
               padding: '40px',
               position: 'relative',
@@ -117,10 +163,14 @@ export async function GET(
             }}
           >
             {/* Corner Accents */}
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '60px', height: '60px', borderTop: `4px solid ${colors.primary}`, borderLeft: `4px solid ${colors.primary}`, borderRadius: '4px 0 0 0' }} />
-            <div style={{ position: 'absolute', top: 0, right: 0, width: '60px', height: '60px', borderTop: `4px solid ${colors.primary}`, borderRight: `4px solid ${colors.primary}`, borderRadius: '0 4px 0 0' }} />
-            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '60px', height: '60px', borderBottom: `4px solid ${colors.primary}`, borderLeft: `4px solid ${colors.primary}`, borderRadius: '0 0 0 4px' }} />
-            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '60px', height: '60px', borderBottom: `4px solid ${colors.primary}`, borderRight: `4px solid ${colors.primary}`, borderRadius: '0 0 4px 0' }} />
+            {elements.showCornerAccents && (
+              <>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '60px', height: '60px', borderTop: `4px solid ${colors.primary}`, borderLeft: `4px solid ${colors.primary}`, borderRadius: '4px 0 0 0' }} />
+                <div style={{ position: 'absolute', top: 0, right: 0, width: '60px', height: '60px', borderTop: `4px solid ${colors.primary}`, borderRight: `4px solid ${colors.primary}`, borderRadius: '0 4px 0 0' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, width: '60px', height: '60px', borderBottom: `4px solid ${colors.primary}`, borderLeft: `4px solid ${colors.primary}`, borderRadius: '0 0 0 4px' }} />
+                <div style={{ position: 'absolute', bottom: 0, right: 0, width: '60px', height: '60px', borderBottom: `4px solid ${colors.primary}`, borderRight: `4px solid ${colors.primary}`, borderRadius: '0 0 4px 0' }} />
+              </>
+            )}
 
             {/* Header */}
             <div
@@ -213,24 +263,28 @@ export async function GET(
               </div>
 
               {/* Project Type Badge */}
-              <div
-                style={{
-                  display: 'flex',
-                  padding: '10px 24px',
-                  borderRadius: '9999px',
-                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                  marginBottom: '16px',
-                }}
-              >
-                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#0a0a1a' }}>
-                  {projectTypeLabel}
-                </span>
-              </div>
+              {elements.showBadge && (
+                <div
+                  style={{
+                    display: 'flex',
+                    padding: '10px 24px',
+                    borderRadius: '9999px',
+                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                    marginBottom: '16px',
+                  }}
+                >
+                  <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#0a0a1a' }}>
+                    {projectTypeLabel}
+                  </span>
+                </div>
+              )}
 
               {/* Completion Date */}
-              <div style={{ fontSize: '16px', color: '#64748B' }}>
-                {completionDate}
-              </div>
+              {elements.showDate && (
+                <div style={{ fontSize: '16px', color: '#64748B' }}>
+                  {completionDate}
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -241,22 +295,24 @@ export async function GET(
                 alignItems: 'center',
                 marginTop: '20px',
                 paddingTop: '20px',
-                borderTop: '1px solid rgba(139, 92, 246, 0.3)',
+                borderTop: `1px solid ${colors.primary}4D`,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div
-                  style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    background: '#22C55E',
-                  }}
-                />
-                <span style={{ fontSize: '14px', color: '#94A3B8' }}>
-                  Verified on {networkName}
-                </span>
-              </div>
+              {elements.showNetwork && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: '#22C55E',
+                    }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#94A3B8' }}>
+                    Verified on {networkName}
+                  </span>
+                </div>
+              )}
               <div style={{ fontSize: '14px', color: '#64748B' }}>
                 zerotocryptodev.com
               </div>
