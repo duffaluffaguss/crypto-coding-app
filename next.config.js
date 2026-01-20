@@ -7,6 +7,7 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
     instrumentationHook: true,
+    serverComponentsExternalPackages: ['prettier', 'prettier-plugin-solidity'],
   },
   webpack: (config, { isServer }) => {
     config.resolve.fallback = {

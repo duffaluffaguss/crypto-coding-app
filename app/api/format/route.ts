@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as prettier from 'prettier';
-import solidityPlugin from 'prettier-plugin-solidity';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,9 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Dynamic import to prevent bundling issues with worker threads
+    const prettier = await import('prettier');
+    const solidityPlugin = await import('prettier-plugin-solidity');
+
     const formatted = await prettier.format(code, {
       parser: 'solidity-parse',
-      plugins: [solidityPlugin],
+      plugins: [solidityPlugin.default || solidityPlugin],
       printWidth: 100,
       tabWidth: 4,
       useTabs: false,

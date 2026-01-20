@@ -81,41 +81,6 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
     }
   }, [code]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const modifier = isMac ? e.metaKey : e.ctrlKey;
-
-      // Ctrl/Cmd + S = Save
-      if (modifier && e.key === 's') {
-        e.preventDefault();
-        if (saveStatus === 'unsaved') {
-          autoSave();
-        }
-      }
-
-      // Ctrl/Cmd + Shift + F = Format
-      if (modifier && e.shiftKey && e.key === 'F') {
-        e.preventDefault();
-        if (!formatting) {
-          formatCode();
-        }
-      }
-
-      // Ctrl/Cmd + B = Compile (Build)
-      if (modifier && e.key === 'b') {
-        e.preventDefault();
-        if (!compiling) {
-          compileCode();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [saveStatus, formatting, compiling, autoSave, formatCode]);
-
   // Auto-save functionality - saves 2 seconds after user stops typing
   const autoSave = useCallback(async () => {
     if (!activeFile || saveStatus === 'saving') return;
@@ -434,6 +399,41 @@ contract ${contractName} {
       setCompiling(false);
     }
   }, [code, activeFile, saveFile]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      // Ctrl/Cmd + S = Save
+      if (modifier && e.key === 's') {
+        e.preventDefault();
+        if (saveStatus === 'unsaved') {
+          autoSave();
+        }
+      }
+
+      // Ctrl/Cmd + Shift + F = Format
+      if (modifier && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        if (!formatting) {
+          formatCode();
+        }
+      }
+
+      // Ctrl/Cmd + B = Compile (Build)
+      if (modifier && e.key === 'b') {
+        e.preventDefault();
+        if (!compiling) {
+          compileCode();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [saveStatus, formatting, compiling, autoSave, formatCode, compileCode]);
 
   // File explorer component (reusable for mobile and desktop)
   const FileExplorer = () => (
