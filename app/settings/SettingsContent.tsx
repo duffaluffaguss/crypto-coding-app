@@ -6,6 +6,7 @@ import { SettingsSection, SettingsItem } from '@/components/settings/SettingsSec
 import { ThemeCustomizer } from '@/components/settings/ThemeCustomizer';
 import { DeleteAccountModal } from '@/components/settings/DeleteAccountModal';
 import { ExportDataButton } from '@/components/settings/ExportDataButton';
+import { SocialVerifyButton } from '@/components/verification/SocialVerifyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -129,6 +130,48 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
             <span className="text-sm text-muted-foreground">
               {email || 'Not set'}
             </span>
+          </SettingsItem>
+        </div>
+      </SettingsSection>
+
+      {/* Connected Accounts Section */}
+      <SettingsSection
+        title="Connected Accounts"
+        description="Link your social media accounts to verify your identity"
+        icon={
+          <svg
+            className="w-5 h-5 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+        }
+      >
+        <div className="space-y-4">
+          <SettingsItem
+            label="Twitter/X"
+            description="Connect your Twitter account to verify your identity"
+          >
+            <SocialVerifyButton platform="twitter" size="sm" />
+          </SettingsItem>
+          <SettingsItem
+            label="GitHub"
+            description="Connect your GitHub account to showcase your coding profile"
+          >
+            <SocialVerifyButton platform="github" size="sm" />
+          </SettingsItem>
+          <SettingsItem
+            label="Discord"
+            description="Connect your Discord account to join our community"
+          >
+            <SocialVerifyButton platform="discord" size="sm" />
           </SettingsItem>
         </div>
       </SettingsSection>

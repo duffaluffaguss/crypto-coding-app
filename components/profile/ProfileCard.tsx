@@ -3,6 +3,7 @@
 import { UserAvatar } from './UserAvatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LeagueBadge } from '@/components/leaderboard/LeagueBadge';
+import { SocialVerificationList } from '@/components/verification/SocialVerifyButton';
 import { cn, formatDate } from '@/lib/utils';
 
 interface ProfileStats {
@@ -30,6 +31,7 @@ interface ProfileCardProps {
   isOwnProfile?: boolean;
   className?: string;
   pointsRank?: number | null;
+  userId: string;
 }
 
 export function ProfileCard({
@@ -43,6 +45,7 @@ export function ProfileCard({
   isOwnProfile = false,
   className,
   pointsRank,
+  userId,
 }: ProfileCardProps) {
   const hasSocialLinks = socialLinks?.websiteUrl || socialLinks?.twitterHandle || socialLinks?.githubUsername;
 
@@ -83,6 +86,12 @@ export function ProfileCard({
             </p>
           </div>
         )}
+
+        {/* Verified Social Accounts */}
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2 text-muted-foreground">Verified Accounts</h3>
+          <SocialVerificationList userId={userId} />
+        </div>
 
         {/* Social Links */}
         {hasSocialLinks && (
