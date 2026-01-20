@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { StreakDisplay } from '@/components/gamification/StreakDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserAvatarDropdown } from '@/components/profile/UserAvatarDropdown';
+import { GlobalSearch } from '@/components/search';
 
 export default async function DashboardLayout({
   children,
@@ -56,6 +57,7 @@ export default async function DashboardLayout({
             </Link>
           </div>
           <div className="flex items-center gap-4">
+            <GlobalSearch />
             <StreakDisplay />
             <NotificationBell />
             <UserAvatarDropdown 
