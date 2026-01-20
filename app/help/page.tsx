@@ -32,7 +32,11 @@ const faqItems = [
   },
   {
     title: 'How do I get test ETH?',
-    content: 'Test ETH (also called testnet ETH) is free cryptocurrency used for practicing on test networks. For Base Sepolia testnet, you can get free test ETH from faucets like the Coinbase faucet or Alchemy faucet. We\'ll prompt you with a link when you need it during deployment.',
+    content: 'Test ETH (also called testnet ETH) is free cryptocurrency used for practicing on test networks. For Base Sepolia testnet, you can get free test ETH from multiple faucets including Coinbase, Alchemy, and QuickNode. We\'ll automatically show you faucet options when your balance is low, and you can find a comprehensive guide at /faucet with step-by-step instructions, multiple faucet options, and frequently asked questions.',
+  },
+  {
+    title: 'Which testnet faucet should I use?',
+    content: 'We recommend starting with the Coinbase faucet as it has high daily limits and reliable uptime. If that\'s unavailable, try the Alchemy or QuickNode faucets. Each faucet has different limits and speeds—our faucet guide shows you all available options with their features and estimated processing times. You can also use multiple faucets to get more test ETH faster.',
   },
   {
     title: 'What is Base network?',

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, usePublicClient, useWalletClient, useSwitchChain } from 'wagmi';
+import { useAccount, usePublicClient, useWalletClient, useSwitchChain, useBalance } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { NETWORKS, DEFAULT_NETWORK, getTxExplorerUrl, type NetworkId } from '@/lib/networks';
 import { logContractDeployed } from '@/lib/activity';
 import { GasEstimate, GasEstimateInline } from './GasEstimate';
 import { VerifyButton } from './VerifyButton';
+import { FaucetButton } from './FaucetButton';
 import type { CompilationResult } from '@/types';
 
 interface GasEstimateData {
@@ -44,6 +45,12 @@ export function DeployButton({
   const { data: walletClient } = useWalletClient();
   const { switchChainAsync } = useSwitchChain();
   const supabase = createClient();
+  
+  // Check balance for low balance warning
+  const { data: balance } = useBalance({
+    address,
+    chainId: NETWORKS[selectedNetwork].chainId,
+  });
 
   const [status, setStatus] = useState<DeployStatus>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -373,6 +380,40 @@ export function DeployButton({
               className="text-xs h-7 bg-yellow-500 hover:bg-yellow-600 text-black"
             >
               Deploy Anyway
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Low Balance Warning */}
+      {!showMainnetWarning && isConnected && balance && networkConfig.isTestnet && 
+       balance.value < BigInt(1000000000000000) && ( // 0.001 ETH threshold
+        <div className="bg-yellow-500/10 border border-yellow-500/50 rounded p-2 text-xs mb-2">
+          <div className="flex items-center gap-2 text-yellow-500 font-medium mb-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Low Balance Warning
+          </div>
+          <p className="text-yellow-500/80 mb-2">
+            Balance: {balance.formatted ? parseFloat(balance.formatted).toFixed(4) : '0.0000'} ETH. 
+            You may need more testnet ETH to deploy contracts.
+          </p>
+          <div className="flex gap-2">
+            <FaucetButton 
+              size="sm" 
+              variant="outline"
+              className="text-xs h-7"
+              showBalance={false}
+              showDropdown={false}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open('/faucet', '_blank')}
+              className="text-xs h-7"
+            >
+              Faucet Guide
             </Button>
           </div>
         </div>
