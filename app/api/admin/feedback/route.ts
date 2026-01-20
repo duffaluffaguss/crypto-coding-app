@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-
-// Admin emails - add your admin emails here
-const ADMIN_EMAILS = [
-  'admin@zerotocryptodev.com',
-  'michael@zerotocryptodev.com',
-  // Add more admin emails as needed
-];
-
-async function isAdmin(email: string | undefined): Promise<boolean> {
-  if (!email) return false;
-  return ADMIN_EMAILS.includes(email.toLowerCase());
-}
+import { isAdminEmail } from '@/lib/admin';
 
 // GET - Fetch all feedback with filters (admin only)
 export async function GET(request: NextRequest) {
@@ -19,7 +8,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user || !await isAdmin(user.email)) {
+    if (!user || !isAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -97,7 +86,7 @@ export async function PATCH(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user || !await isAdmin(user.email)) {
+    if (!user || !isAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

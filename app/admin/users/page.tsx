@@ -2,19 +2,8 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { isAdminEmail } from '@/lib/admin';
 import { Users, Search, Mail, Calendar, FolderKanban, Rocket, Trophy } from 'lucide-react';
-
-// Admin emails - add your admin emails here
-const ADMIN_EMAILS = [
-  'admin@zerotocryptodev.com',
-  'michael@zerotocryptodev.com',
-  // Add more admin emails as needed
-];
-
-async function isAdmin(email: string | undefined): Promise<boolean> {
-  if (!email) return false;
-  return ADMIN_EMAILS.includes(email.toLowerCase());
-}
 
 export default async function AdminUsersPage({
   searchParams,
@@ -24,7 +13,7 @@ export default async function AdminUsersPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !await isAdmin(user.email)) {
+  if (!user || !isAdminEmail(user.email)) {
     redirect('/dashboard');
   }
 
