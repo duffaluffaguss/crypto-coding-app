@@ -70,14 +70,27 @@ export function TutorChat({ project, currentLesson, currentCode }: TutorChatProp
         .order('created_at', { ascending: true });
 
       if (history && history.length > 0) {
-        // Has history - load it and show "welcome back" message first
+        // Has history - load it and show "welcome back" message
         const welcomeBack = {
           id: 'welcome-back',
           role: 'assistant' as const,
           content: `👋 **Welcome back!** Ready to continue building **${project.name}**?\n\nI remember where we left off. Click a lesson on the left to jump back in, or ask me anything!`,
         };
         
-        const loadedMessages = history.map((msg, index) => ({
+        // Filter out any old welcome messages that were previously saved to DB
+        const filteredHistory = history.filter((msg) => {
+          const content = msg.content || '';
+          // Skip old welcome messages (check for distinctive phrases)
+          if (msg.role === 'assistant' && (
+            content.includes("Hey there! I'm **Sol**, your personal coding tutor") ||
+            content.includes("I'm here to guide you through building") && content.includes("step by step. I'll:")
+          )) {
+            return false;
+          }
+          return true;
+        });
+        
+        const loadedMessages = filteredHistory.map((msg, index) => ({
           id: msg.id || `msg-${index}`,
           role: msg.role as 'user' | 'assistant',
           content: msg.content,
