@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
+import { useAccount, usePublicClient, useWalletClient, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import { NETWORKS, DEFAULT_NETWORK, getTxExplorerUrl, type NetworkId } from '@/lib/networks';
 import type { CompilationResult } from '@/types';
 
 interface DeployButtonProps {
@@ -15,7 +16,7 @@ interface DeployButtonProps {
   onDeploySuccess: (address: string, txHash: string) => void;
 }
 
-type DeployStatus = 'idle' | 'compiling' | 'awaiting_confirmation' | 'deploying' | 'success' | 'error';
+type DeployStatus = 'idle' | 'compiling' | 'switching_network' | 'awaiting_confirmation' | 'deploying' | 'success' | 'error';
 
 export function DeployButton({
   projectId,
@@ -25,15 +26,26 @@ export function DeployButton({
   onCompile,
   onDeploySuccess,
 }: DeployButtonProps) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
+  const { switchChainAsync } = useSwitchChain();
   const supabase = createClient();
 
   const [status, setStatus] = useState<DeployStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>(DEFAULT_NETWORK);
+  const [showMainnetWarning, setShowMainnetWarning] = useState(false);
+
+  const networkConfig = NETWORKS[selectedNetwork];
+
+  const handleNetworkChange = (networkId: NetworkId) => {
+    setSelectedNetwork(networkId);
+    setError(null);
+    setStatus('idle');
+  };
 
   const handleDeploy = async () => {
     if (!isConnected || !walletClient || !publicClient) {
@@ -41,11 +53,30 @@ export function DeployButton({
       return;
     }
 
+    // Show mainnet warning if deploying to mainnet
+    if (!networkConfig.isTestnet && !showMainnetWarning) {
+      setShowMainnetWarning(true);
+      return;
+    }
+
+    setShowMainnetWarning(false);
     setError(null);
     setTxHash(null);
     setDeployedAddress(null);
 
     try {
+      // Switch chain if needed
+      if (chain?.id !== networkConfig.chainId) {
+        setStatus('switching_network');
+        try {
+          await switchChainAsync({ chainId: networkConfig.chainId });
+        } catch (err: any) {
+          setStatus('error');
+          setError(`Failed to switch to ${networkConfig.name}. Please switch manually in your wallet.`);
+          return;
+        }
+      }
+
       // Step 1: Compile if needed
       if (!compilationResult?.success || !compilationResult?.bytecode) {
         setStatus('compiling');
@@ -125,7 +156,7 @@ export function DeployButton({
         .from('projects')
         .update({
           contract_address: contractAddress,
-          network: 'base-sepolia',
+          network: selectedNetwork,
           status: 'deployed',
           deployed_at: new Date().toISOString(),
           contract_abi: abi,
@@ -146,6 +177,16 @@ export function DeployButton({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             Compiling...
+          </>
+        );
+      case 'switching_network':
+        return (
+          <>
+            <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Switching Network...
           </>
         );
       case 'awaiting_confirmation':
@@ -182,36 +223,85 @@ export function DeployButton({
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            Deploy to Base
+            Deploy to {networkConfig.name}
           </>
         );
     }
   };
 
-  const isDisabled = status === 'compiling' || status === 'awaiting_confirmation' || status === 'deploying';
+  const isDisabled = status === 'compiling' || status === 'switching_network' || status === 'awaiting_confirmation' || status === 'deploying';
 
   return (
     <div className="flex flex-col gap-2">
-      <Button
-        onClick={handleDeploy}
-        disabled={isDisabled || !isConnected}
-        variant={status === 'success' ? 'outline' : 'default'}
-        size="sm"
-        className={status === 'success' ? 'text-green-500 border-green-500' : ''}
-      >
-        {getButtonContent()}
-      </Button>
+      {/* Network Selector */}
+      <div className="flex items-center gap-2">
+        <label className="text-xs text-muted-foreground">Network:</label>
+        <select
+          value={selectedNetwork}
+          onChange={(e) => handleNetworkChange(e.target.value as NetworkId)}
+          disabled={isDisabled}
+          className="text-xs bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="base-sepolia">Base Sepolia (Testnet)</option>
+          <option value="base-mainnet">Base Mainnet</option>
+        </select>
+      </div>
+
+      {/* Mainnet Warning */}
+      {showMainnetWarning && (
+        <div className="bg-yellow-500/10 border border-yellow-500/50 rounded p-2 text-xs">
+          <div className="flex items-center gap-2 text-yellow-500 font-medium mb-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Mainnet Deployment
+          </div>
+          <p className="text-yellow-500/80 mb-2">
+            This will use real ETH! Make sure your contract is tested and ready for production.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowMainnetWarning(false)}
+              className="text-xs h-7"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleDeploy}
+              className="text-xs h-7 bg-yellow-500 hover:bg-yellow-600 text-black"
+            >
+              Deploy Anyway
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Deploy Button */}
+      {!showMainnetWarning && (
+        <Button
+          onClick={handleDeploy}
+          disabled={isDisabled || !isConnected}
+          variant={status === 'success' ? 'outline' : 'default'}
+          size="sm"
+          className={status === 'success' ? 'text-green-500 border-green-500' : ''}
+        >
+          {getButtonContent()}
+        </Button>
+      )}
 
       {/* Transaction Status */}
       {txHash && (
         <div className="text-xs">
           <a
-            href={`https://sepolia.basescan.org/tx/${txHash}`}
+            href={getTxExplorerUrl(selectedNetwork, txHash)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline flex items-center gap-1"
           >
-            View on BaseScan
+            View on {networkConfig.explorerName}
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
