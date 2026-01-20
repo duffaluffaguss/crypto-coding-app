@@ -12,6 +12,7 @@ import {
   copyShareLink
 } from '@/lib/nft';
 import { cn } from '@/lib/utils';
+import { ShareNFTModal } from '@/components/nft/ShareNFTModal';
 
 interface NFTCardProps {
   nft: UserNFT;
@@ -21,6 +22,7 @@ interface NFTCardProps {
 export function NFTCard({ nft, onViewCertificate }: NFTCardProps) {
   const [copied, setCopied] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const gradientClass = PROJECT_TYPE_COLORS[nft.projectType] || PROJECT_TYPE_COLORS.nft_marketplace;
   const glowClass = PROJECT_TYPE_GLOW[nft.projectType] || PROJECT_TYPE_GLOW.nft_marketplace;
@@ -156,6 +158,18 @@ export function NFTCard({ nft, onViewCertificate }: NFTCardProps) {
           </Button>
         </div>
 
+        {/* Share your NFT section */}
+        <div className="pt-2 border-t border-border/50">
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors group/share"
+          >
+            <span className="group-hover/share:animate-bounce">🎉</span>
+            Share your NFT
+            <span className="group-hover/share:animate-bounce">🎉</span>
+          </button>
+        </div>
+
         {/* BaseScan Link */}
         {nft.baseScanUrl && (
           <a
@@ -168,6 +182,17 @@ export function NFTCard({ nft, onViewCertificate }: NFTCardProps) {
           </a>
         )}
       </div>
+
+      {/* Share Modal */}
+      <ShareNFTModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        tokenId={nft.tokenId}
+        projectName={nft.projectName}
+        projectType={nft.projectType}
+        openSeaUrl={nft.openSeaUrl}
+        imageUrl={nft.imageUrl}
+      />
     </div>
   );
 }

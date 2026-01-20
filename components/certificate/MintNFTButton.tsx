@@ -5,6 +5,9 @@ import { useAccount, useConnect, useDisconnect, useWriteContract, useWaitForTran
 import { baseSepolia, base } from 'wagmi/chains';
 import { Button } from '@/components/ui/button';
 import { CERTIFICATE_NFT_ABI, getCertificateNFTAddress, getOpenSeaURL, getBaseScanURL } from '@/lib/certificate-nft';
+import { ShareNFTModal } from '@/components/nft/ShareNFTModal';
+import { NFTMintedToast } from '@/components/nft/NFTMintedToast';
+import { getNFTImageUrl } from '@/lib/nft';
 import type { CertificateData } from './Certificate';
 import type { Address } from 'viem';
 
@@ -21,6 +24,8 @@ export function MintNFTButton({ certificateData, projectId, isOwner, onMintSucce
   const [mintState, setMintState] = useState<MintState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [tokenId, setTokenId] = useState<bigint | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -99,6 +104,7 @@ export function MintNFTButton({ certificateData, projectId, isOwner, onMintSucce
       if (mintLog && mintLog.topics[1]) {
         const newTokenId = BigInt(mintLog.topics[1]);
         setTokenId(newTokenId);
+        setShowToast(true);
         onMintSuccess?.(newTokenId);
       }
       refetchMinted();
@@ -233,44 +239,86 @@ export function MintNFTButton({ certificateData, projectId, isOwner, onMintSucce
   // Success state
   if (mintState === 'success') {
     return (
-      <div className="flex flex-col items-center gap-3">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-          <CheckIcon className="w-5 h-5 text-green-500" />
-          <span className="font-medium text-green-600 dark:text-green-400">
-            Successfully Minted! 🎉
-          </span>
-        </div>
-        
-        {tokenId && (
-          <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-            <span className="text-muted-foreground">Token #{tokenId.toString()}</span>
-            {openSeaUrl && (
-              <a
-                href={openSeaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="outline" size="sm" className="gap-1">
-                  <OpenSeaIcon className="w-4 h-4" />
-                  OpenSea
-                </Button>
-              </a>
-            )}
-            {baseScanUrl && (
-              <a
-                href={baseScanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="outline" size="sm" className="gap-1">
-                  <ExternalLinkIcon className="w-4 h-4" />
-                  BaseScan
-                </Button>
-              </a>
-            )}
+      <>
+        <div className="flex flex-col items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
+            <CheckIcon className="w-5 h-5 text-green-500" />
+            <span className="font-medium text-green-600 dark:text-green-400">
+              Successfully Minted! 🎉
+            </span>
           </div>
+          
+          {tokenId && (
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+              <span className="text-muted-foreground">Token #{tokenId.toString()}</span>
+              {openSeaUrl && (
+                <a
+                  href={openSeaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <OpenSeaIcon className="w-4 h-4" />
+                    OpenSea
+                  </Button>
+                </a>
+              )}
+              {baseScanUrl && (
+                <a
+                  href={baseScanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <ExternalLinkIcon className="w-4 h-4" />
+                    BaseScan
+                  </Button>
+                </a>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1"
+                onClick={() => setShowShareModal(true)}
+              >
+                <ShareIcon className="w-4 h-4" />
+                Share
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Share Modal */}
+        {tokenId && (
+          <ShareNFTModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            tokenId={tokenId}
+            projectName={certificateData.projectName}
+            projectType={certificateData.projectType}
+            openSeaUrl={openSeaUrl}
+            imageUrl={getNFTImageUrl(chainId, tokenId)}
+          />
         )}
-      </div>
+
+        {/* Minted Toast */}
+        {tokenId && (
+          <NFTMintedToast
+            isVisible={showToast}
+            tokenId={tokenId}
+            projectName={certificateData.projectName}
+            openSeaUrl={openSeaUrl}
+            onViewNFT={() => {
+              if (openSeaUrl) window.open(openSeaUrl, '_blank');
+            }}
+            onShare={() => {
+              setShowToast(false);
+              setShowShareModal(true);
+            }}
+            onDismiss={() => setShowToast(false)}
+          />
+        )}
+      </>
     );
   }
 
@@ -394,6 +442,19 @@ function ExternalLinkIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+      />
+    </svg>
+  );
+}
+
+function ShareIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        strokeWidth={2} 
+        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" 
       />
     </svg>
   );
