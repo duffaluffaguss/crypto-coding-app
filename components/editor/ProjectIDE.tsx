@@ -53,7 +53,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const supabase = createClient();
 
   // Format code with Prettier
-  const formatCode = async () => {
+  const formatCode = useCallback(async () => {
     if (!code.trim()) return;
     
     setFormatting(true);
@@ -77,7 +77,42 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
     } finally {
       setFormatting(false);
     }
-  };
+  }, [code]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      // Ctrl/Cmd + S = Save
+      if (modifier && e.key === 's') {
+        e.preventDefault();
+        if (saveStatus === 'unsaved') {
+          autoSave();
+        }
+      }
+
+      // Ctrl/Cmd + Shift + F = Format
+      if (modifier && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        if (!formatting) {
+          formatCode();
+        }
+      }
+
+      // Ctrl/Cmd + B = Compile (Build)
+      if (modifier && e.key === 'b') {
+        e.preventDefault();
+        if (!compiling) {
+          compileCode();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [saveStatus, formatting, compiling, autoSave, formatCode]);
 
   // Auto-save functionality - saves 2 seconds after user stops typing
   const autoSave = useCallback(async () => {
@@ -354,7 +389,7 @@ contract ${contractName} {
     }
   };
 
-  const saveFile = async () => {
+  const saveFile = useCallback(async () => {
     if (!activeFile) return;
 
     await supabase
@@ -365,9 +400,9 @@ contract ${contractName} {
     setFiles((prev) =>
       prev.map((f) => (f.id === activeFile.id ? { ...f, content: code } : f))
     );
-  };
+  }, [activeFile, code, supabase]);
 
-  const compileCode = async () => {
+  const compileCode = useCallback(async () => {
     setCompiling(true);
     setCompilationResult(null);
 
@@ -396,7 +431,7 @@ contract ${contractName} {
     } finally {
       setCompiling(false);
     }
-  };
+  }, [code, activeFile, saveFile]);
 
   // File explorer component (reusable for mobile and desktop)
   const FileExplorer = () => (
