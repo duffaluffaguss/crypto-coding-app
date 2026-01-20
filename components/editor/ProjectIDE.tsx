@@ -17,6 +17,7 @@ import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
 import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
 import { DeploymentHistory } from '@/components/deployments';
 import { SubmitTemplateModal } from '@/components/templates/SubmitTemplateModal';
+import { SubmitSnippetModal } from '@/components/snippets/SubmitSnippetModal';
 import { InviteCollaboratorModal } from '@/components/project/InviteCollaboratorModal';
 import { CollaboratorsList } from '@/components/project/CollaboratorsList';
 import { createClient } from '@/lib/supabase/client';
@@ -64,6 +65,8 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [versionCount, setVersionCount] = useState<number>(0);
   const [showSubmitTemplate, setShowSubmitTemplate] = useState(false);
+  const [showSubmitSnippet, setShowSubmitSnippet] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [collaboratorsRefresh, setCollaboratorsRefresh] = useState(0);
@@ -455,6 +458,41 @@ contract ${contractName} {
     setLastSaved(new Date());
   }, [activeFile, code, supabase]);
 
+  // Handle snippet submission
+  const handleSubmitSnippet = () => {
+    let codeToSubmit = selectedText;
+    
+    // If no text is selected, use the full code
+    if (!codeToSubmit) {
+      codeToSubmit = code;
+    }
+    
+    setShowSubmitSnippet(true);
+  };
+
+  // Get selected text from Monaco editor
+  const getSelectedText = () => {
+    if (editorRef.current) {
+      const selection = editorRef.current.getSelection();
+      const model = editorRef.current.getModel();
+      if (selection && model) {
+        return model.getValueInRange(selection);
+      }
+    }
+    return '';
+  };
+
+  // Handle editor mount
+  const handleEditorDidMount = (editor: any) => {
+    editorRef.current = editor;
+    
+    // Listen for selection changes
+    editor.onDidChangeCursorSelection(() => {
+      const selected = getSelectedText();
+      setSelectedText(selected);
+    });
+  };
+
   const compileCode = useCallback(async () => {
     setCompiling(true);
     setCompilationResult(null);
@@ -815,6 +853,18 @@ contract ${contractName} {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Review
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSubmitSnippet}
+              title={selectedText ? 'Submit selected code as snippet' : 'Submit code as snippet'}
+              className={selectedText ? 'border-primary' : ''}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {selectedText ? 'Submit Selection' : 'Submit Snippet'}
             </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} data-tour="compile">
               {compiling ? (
@@ -1188,6 +1238,14 @@ contract ${contractName} {
           }, {} as Record<string, string>)
         }}
         initialProjectType={project.project_type}
+      />
+
+      {/* Submit Snippet Modal */}
+      <SubmitSnippetModal
+        isOpen={showSubmitSnippet}
+        onClose={() => setShowSubmitSnippet(false)}
+        prefilledCode={selectedText || code}
+        selectedText={selectedText}
       />
 
       {/* Onboarding Tour */}
