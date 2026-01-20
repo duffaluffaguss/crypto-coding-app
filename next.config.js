@@ -1,9 +1,12 @@
+const { withSentryConfig } = require("@sentry/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    instrumentationHook: true,
   },
   webpack: (config, { isServer }) => {
     config.resolve.fallback = {
@@ -30,4 +33,16 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withSentryConfig(nextConfig, {
+  // Suppresses source map upload logs during build
+  silent: true,
+  
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  
+  // Only upload source maps in production
+  disableServerWebpackPlugin: !process.env.SENTRY_DSN,
+  disableClientWebpackPlugin: !process.env.SENTRY_DSN,
+});

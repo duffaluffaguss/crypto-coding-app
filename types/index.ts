@@ -34,6 +34,9 @@ export interface Project {
   network: Network | null;
   contract_abi: any[] | null;
   generated_frontend: string | null;
+  is_public?: boolean;
+  showcase_description?: string | null;
+  likes_count?: number;
 }
 
 export interface ProjectFile {
