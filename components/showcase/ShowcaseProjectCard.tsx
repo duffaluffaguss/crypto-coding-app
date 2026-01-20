@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
+import CloneButton from '@/components/project/CloneButton';
 import { createClient } from '@/lib/supabase/client';
 import type { ProjectType } from '@/types';
 
@@ -66,8 +67,16 @@ export function ShowcaseProjectCard({ project }: ShowcaseProjectCardProps) {
 
   return (
     <Card className="h-full hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group relative">
-      {/* Bookmark Button */}
-      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Action Buttons */}
+      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+        <CloneButton
+          projectId={project.id}
+          projectName={project.name}
+          variant="outline"
+          size="sm"
+          showText={false}
+          className="h-8 w-8 p-0 bg-background/80 hover:bg-background"
+        />
         <BookmarkButton
           itemType="project"
           itemId={project.id}

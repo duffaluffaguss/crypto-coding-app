@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DeleteProjectButton } from './DeleteProjectButton';
+import CloneButton from '@/components/project/CloneButton';
 
 interface ProjectCardProps {
   project: {
@@ -98,11 +99,19 @@ export function ProjectCard({ project }: ProjectCardProps) {
           </CardContent>
         </Card>
       </Link>
-      {/* Delete button - shows on hover */}
+      {/* Action buttons - show on hover */}
       <div 
-        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2"
         onClick={(e) => e.stopPropagation()}
       >
+        <CloneButton 
+          projectId={project.id} 
+          projectName={project.name}
+          variant="ghost" 
+          size="sm" 
+          showText={false}
+          className="h-8 w-8 p-0"
+        />
         <DeleteProjectButton projectId={project.id} projectName={project.name} />
       </div>
     </div>

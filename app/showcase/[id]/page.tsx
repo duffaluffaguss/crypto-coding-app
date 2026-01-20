@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LikeButton } from '@/components/showcase/LikeButton';
-import { ForkButton } from '@/components/showcase/ForkButton';
+import CloneButton from '@/components/project/CloneButton';
 import { ShareButton } from '@/components/social';
 import { CommentSection } from '@/components/comments';
 import { ShowcaseBookmarkButton } from '@/components/showcase/ShowcaseBookmarkButton';
@@ -272,11 +272,12 @@ export default async function ShowcaseProjectPage({
                   isLoggedIn={!!user}
                 />
 
-                {/* Fork Button */}
-                <ForkButton
+                {/* Clone Button */}
+                <CloneButton
                   projectId={project.id}
                   projectName={project.name}
-                  isLoggedIn={!!user}
+                  variant="outline"
+                  className="w-full"
                 />
 
                 {/* Share Button */}
