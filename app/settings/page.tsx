@@ -13,7 +13,16 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, onboarding_completed')
+    .select(`
+      display_name, 
+      onboarding_completed,
+      bio,
+      website_url,
+      twitter_handle,
+      github_username,
+      discord_username,
+      avatar_url
+    `)
     .eq('id', user.id)
     .single();
 
@@ -68,8 +77,10 @@ export default async function SettingsPage() {
         </div>
 
         <SettingsContent
+          userId={user.id}
           displayName={profile?.display_name}
           email={user.email}
+          profileData={profile}
         />
       </main>
     </div>

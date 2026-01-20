@@ -272,6 +272,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
             websiteUrl: profile.website_url,
             twitterHandle: profile.twitter_handle,
             githubUsername: profile.github_username,
+            discordUsername: profile.discord_username,
           }}
           memberSince={profile.created_at}
           stats={stats}
