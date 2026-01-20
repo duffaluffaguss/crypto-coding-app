@@ -74,6 +74,12 @@ export default async function DashboardLayout({
             >
               Leaderboard
             </Link>
+            <Link
+              href="/community"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Community
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <GlobalSearch />
