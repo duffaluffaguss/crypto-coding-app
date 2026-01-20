@@ -10,6 +10,7 @@ import {
   Shield,
   BarChart3,
   Puzzle,
+  Megaphone,
 } from 'lucide-react';
 
 const navItems = [
@@ -37,6 +38,11 @@ const navItems = [
     href: '/admin/feedback',
     label: 'Feedback',
     icon: MessageSquare,
+  },
+  {
+    href: '/admin/announcements',
+    label: 'Announcements',
+    icon: Megaphone,
   },
 ];
 
