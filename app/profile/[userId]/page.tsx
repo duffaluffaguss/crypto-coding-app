@@ -175,6 +175,22 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   
   const pointsRank = (pointsRankCount ?? 0) + 1;
 
+  // Fetch follow data
+  const [followerCountResult, followingCountResult, isFollowingResult] = await Promise.all([
+    supabase.rpc('get_follower_count', { p_user_id: userId }),
+    supabase.rpc('get_following_count', { p_user_id: userId }),
+    currentUser
+      ? supabase.rpc('is_following', {
+          p_follower_id: currentUser.id,
+          p_following_id: userId,
+        })
+      : Promise.resolve({ data: false }),
+  ]);
+
+  const followerCount = followerCountResult.data || 0;
+  const followingCount = followingCountResult.data || 0;
+  const isFollowing = isFollowingResult.data || false;
+
   const stats = {
     projectsCreated: projectsCount || 0,
     lessonsCompleted: lessonsCount || 0,
@@ -248,6 +264,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
         {/* Profile Card */}
         <ProfileCard
+          userId={userId}
           displayName={profile.display_name}
           bio={profile.bio}
           avatarUrl={profile.avatar_url}
@@ -258,8 +275,18 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           }}
           memberSince={profile.created_at}
           stats={stats}
-          isOwnProfile={false}
+          isOwnProfile={isOwnProfile}
           pointsRank={pointsRank}
+        />
+
+        {/* Follow Section */}
+        <ProfileFollowSection
+          userId={userId}
+          currentUserId={currentUser?.id}
+          followerCount={followerCount}
+          followingCount={followingCount}
+          initialIsFollowing={isFollowing}
+          className="mt-4"
         />
 
         <div className="grid lg:grid-cols-2 gap-8 mt-8">
