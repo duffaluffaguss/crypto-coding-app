@@ -11,6 +11,7 @@ import {
   BarChart3,
   Puzzle,
   Megaphone,
+  Flag,
 } from 'lucide-react';
 
 const navItems = [
@@ -43,6 +44,11 @@ const navItems = [
     href: '/admin/announcements',
     label: 'Announcements',
     icon: Megaphone,
+  },
+  {
+    href: '/admin/features',
+    label: 'Feature Flags',
+    icon: Flag,
   },
 ];
 
