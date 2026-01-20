@@ -118,6 +118,20 @@
 - [ ] **Run migration**: Execute `supabase/migrations/004_user_wallets.sql` in SQL Editor
 - [ ] **Vercel**: Redeploy after pushing to update production
 
+### Session 7 (2026-01-20)
+- ✅ Fix AI hint button (use append() instead of setMessages())
+- ✅ Progressive hints (Level 1-4 get increasingly obvious)
+- ✅ Welcome back message for returning users (no duplicate welcome)
+- ✅ **Mobile Responsive IDE**:
+  - Bottom tab navigation: Code | Lessons | AI Tutor
+  - Compact mobile header
+  - Full-screen views for each section
+  - Selecting file/lesson auto-switches to code view
+- ✅ **Code formatting with Prettier**:
+  - Format button in desktop toolbar
+  - ✨ button on mobile header
+  - Uses prettier-plugin-solidity
+
 ## 🚧 Potential Enhancements
 - [ ] Test full verification flow end-to-end
 
