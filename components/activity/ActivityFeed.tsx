@@ -21,6 +21,7 @@ const ACTIVITY_TYPES: { value: ActivityType | 'all'; label: string; icon: string
   { value: 'lesson_completed', label: 'Lessons Completed', icon: '📚' },
   { value: 'contract_deployed', label: 'Contracts Deployed', icon: '🚀' },
   { value: 'achievement_earned', label: 'Achievements Earned', icon: '🏆' },
+  { value: 'user_followed', label: 'User Follows', icon: '👥' },
   { value: 'joined_showcase', label: 'Showcase Posts', icon: '🌟' },
 ];
 

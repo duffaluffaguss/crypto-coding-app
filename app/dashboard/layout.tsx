@@ -81,6 +81,12 @@ export default async function DashboardLayout({
               Community
             </Link>
             <Link
+              href="/activity"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Activity
+            </Link>
+            <Link
               href="/builders"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >

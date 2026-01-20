@@ -12,12 +12,12 @@ import {
 } from '@/lib/activity';
 import { cn } from '@/lib/utils';
 
-interface ActivityItemProps {
+interface ActivityCardProps {
   activity: Activity;
   showUser?: boolean;
 }
 
-export function ActivityItem({ activity, showUser = true }: ActivityItemProps) {
+export function ActivityCard({ activity, showUser = true }: ActivityCardProps) {
   const meta = getActivityMeta(activity.type);
   // Handle both new 'data' and legacy 'metadata' fields
   const activityData = activity.data || activity.metadata || {};
@@ -80,7 +80,7 @@ export function ActivityItem({ activity, showUser = true }: ActivityItemProps) {
           </span>
         </div>
 
-        {/* Extra data display */}
+        {/* Extra data display based on activity type */}
         {activity.type === 'contract_deployed' && activityData.contractAddress && (
           <div className="mt-2 text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded inline-block">
             {String(activityData.contractAddress).slice(0, 10)}...
@@ -130,7 +130,7 @@ export function ActivityItem({ activity, showUser = true }: ActivityItemProps) {
 }
 
 // Skeleton for loading state
-export function ActivityItemSkeleton() {
+export function ActivityCardSkeleton() {
   return (
     <div className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-card/50 animate-pulse">
       <div className="w-10 h-10 rounded-full bg-muted" />

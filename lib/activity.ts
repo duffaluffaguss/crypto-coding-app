@@ -5,22 +5,26 @@ export type ActivityType =
   | 'lesson_completed'
   | 'contract_deployed'
   | 'achievement_earned'
+  | 'user_followed'
   | 'joined_showcase';
 
 export interface Activity {
   id: string;
   user_id: string;
   type: ActivityType;
-  metadata: Record<string, unknown>;
+  data: Record<string, unknown>;
   created_at: string;
   display_name?: string;
   avatar_url?: string | null;
+  // Legacy support
+  metadata?: Record<string, unknown>;
 }
 
 export interface LogActivityParams {
   userId: string;
   type: ActivityType;
-  metadata?: Record<string, unknown>;
+  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>; // Legacy support
 }
 
 /**
@@ -30,14 +34,17 @@ export async function logActivity(
   supabase: SupabaseClient,
   params: LogActivityParams
 ): Promise<{ success: boolean; activityId?: string; error?: string }> {
-  const { userId, type, metadata = {} } = params;
+  const { userId, type, data = {}, metadata = {} } = params;
+  
+  // Use data field for new schema, fall back to metadata for legacy support
+  const activityData = Object.keys(data).length > 0 ? data : metadata;
 
-  const { data, error } = await supabase
+  const { data: insertData, error } = await supabase
     .from('activities')
     .insert({
       user_id: userId,
       type,
-      metadata,
+      data: activityData,
     })
     .select('id')
     .single();
@@ -47,7 +54,7 @@ export async function logActivity(
     return { success: false, error: error.message };
   }
 
-  return { success: true, activityId: data.id };
+  return { success: true, activityId: insertData.id };
 }
 
 /**
@@ -62,7 +69,7 @@ export async function logProjectCreated(
   return logActivity(supabase, {
     userId,
     type: 'project_created',
-    metadata: { projectId, projectName },
+    data: { projectId, projectName },
   });
 }
 
@@ -79,7 +86,7 @@ export async function logLessonCompleted(
   return logActivity(supabase, {
     userId,
     type: 'lesson_completed',
-    metadata: { lessonId, lessonTitle, tutorialTitle },
+    data: { lessonId, lessonTitle, tutorialTitle },
   });
 }
 
@@ -96,7 +103,7 @@ export async function logContractDeployed(
   return logActivity(supabase, {
     userId,
     type: 'contract_deployed',
-    metadata: { contractAddress, contractName, network },
+    data: { contractAddress, contractName, network },
   });
 }
 
@@ -113,7 +120,24 @@ export async function logAchievementEarned(
   return logActivity(supabase, {
     userId,
     type: 'achievement_earned',
-    metadata: { achievementName, achievementIcon, points },
+    data: { achievementName, achievementIcon, points },
+  });
+}
+
+/**
+ * Log a user followed activity
+ */
+export async function logUserFollowed(
+  supabase: SupabaseClient,
+  userId: string,
+  followedUserId: string,
+  followedUsername: string,
+  followedDisplayName?: string
+): Promise<{ success: boolean; error?: string }> {
+  return logActivity(supabase, {
+    userId,
+    type: 'user_followed',
+    data: { followedUserId, followedUsername, followedDisplayName },
   });
 }
 
@@ -129,7 +153,7 @@ export async function logJoinedShowcase(
   return logActivity(supabase, {
     userId,
     type: 'joined_showcase',
-    metadata: { projectId, projectName },
+    data: { projectId, projectName },
   });
 }
 
@@ -165,6 +189,13 @@ export function getActivityMeta(type: ActivityType): { icon: string; color: stri
         color: 'text-purple-500',
         bgColor: 'bg-purple-500/10',
         label: 'Achievement Earned',
+      };
+    case 'user_followed':
+      return {
+        icon: '👥',
+        color: 'text-indigo-500',
+        bgColor: 'bg-indigo-500/10',
+        label: 'User Followed',
       };
     case 'joined_showcase':
       return {
@@ -202,40 +233,50 @@ export function getTimeAgo(date: string): string {
 }
 
 /**
- * Get activity description based on type and metadata
+ * Get activity description based on type and data/metadata
  */
-export function getActivityDescription(type: ActivityType, metadata: Record<string, unknown>): string {
+export function getActivityDescription(type: ActivityType, data: Record<string, unknown>, metadata?: Record<string, unknown>): string {
+  // Use data field first, fall back to metadata for legacy support
+  const activityData = Object.keys(data).length > 0 ? data : (metadata || {});
+  
   switch (type) {
     case 'project_created':
-      return `created a new project "${metadata.projectName || 'Untitled'}"`;
+      return `created a new project "${activityData.projectName || 'Untitled'}"`;
     case 'lesson_completed':
-      return `completed the lesson "${metadata.lessonTitle || 'Unknown'}"${metadata.tutorialTitle ? ` in ${metadata.tutorialTitle}` : ''}`;
+      return `completed the lesson "${activityData.lessonTitle || 'Unknown'}"${activityData.tutorialTitle ? ` in ${activityData.tutorialTitle}` : ''}`;
     case 'contract_deployed':
-      return `deployed a contract "${metadata.contractName || 'Contract'}" on ${metadata.network || 'testnet'}`;
+      return `deployed a contract "${activityData.contractName || 'Contract'}" on ${activityData.network || 'testnet'}`;
     case 'achievement_earned':
-      return `earned the achievement "${metadata.achievementName || 'Unknown'}" ${metadata.achievementIcon || '🏆'}`;
+      return `earned the achievement "${activityData.achievementName || 'Unknown'}" ${activityData.achievementIcon || '🏆'}`;
+    case 'user_followed':
+      return `started following ${activityData.followedDisplayName || activityData.followedUsername || 'someone'}`;
     case 'joined_showcase':
-      return `shared "${metadata.projectName || 'a project'}" to the showcase`;
+      return `shared "${activityData.projectName || 'a project'}" to the showcase`;
     default:
       return 'performed an action';
   }
 }
 
 /**
- * Get link for activity based on type and metadata
+ * Get link for activity based on type and data/metadata
  */
-export function getActivityLink(type: ActivityType, metadata: Record<string, unknown>): string | null {
+export function getActivityLink(type: ActivityType, data: Record<string, unknown>, metadata?: Record<string, unknown>): string | null {
+  // Use data field first, fall back to metadata for legacy support
+  const activityData = Object.keys(data).length > 0 ? data : (metadata || {});
+  
   switch (type) {
     case 'project_created':
-      return metadata.projectId ? `/projects/${metadata.projectId}` : null;
+      return activityData.projectId ? `/projects/${activityData.projectId}` : null;
     case 'lesson_completed':
-      return metadata.lessonId ? `/learn?lesson=${metadata.lessonId}` : '/learn';
+      return activityData.lessonId ? `/learn?lesson=${activityData.lessonId}` : '/learn';
     case 'contract_deployed':
-      return metadata.contractAddress ? `/projects?address=${metadata.contractAddress}` : null;
+      return activityData.contractAddress ? `/projects?address=${activityData.contractAddress}` : null;
     case 'achievement_earned':
       return '/achievements';
+    case 'user_followed':
+      return activityData.followedUserId ? `/profile/${activityData.followedUserId}` : null;
     case 'joined_showcase':
-      return metadata.projectId ? `/showcase/${metadata.projectId}` : '/showcase';
+      return activityData.projectId ? `/showcase/${activityData.projectId}` : '/showcase';
     default:
       return null;
   }
