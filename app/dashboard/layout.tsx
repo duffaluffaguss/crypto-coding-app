@@ -5,6 +5,7 @@ import { StreakDisplay } from '@/components/gamification/StreakDisplay';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserAvatarDropdown } from '@/components/profile/UserAvatarDropdown';
 import { GlobalSearch } from '@/components/search';
+import { AnnouncementBanner, AnnouncementModal } from '@/components/announcements';
 
 export default async function DashboardLayout({
   children,
@@ -30,6 +31,12 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Announcement Banner */}
+      <AnnouncementBanner />
+      
+      {/* Announcement Modal for Major Releases */}
+      <AnnouncementModal />
+      
       {/* Top Navigation */}
       <nav className="border-b border-border bg-card">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
