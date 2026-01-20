@@ -64,6 +64,14 @@ export interface ProjectFile {
   updated_at: string;
 }
 
+export interface CodeVersion {
+  id: string;
+  file_id: string;
+  content: string;
+  message: string | null;
+  created_at: string;
+}
+
 export interface Lesson {
   id: string;
   title: string;

@@ -11,6 +11,7 @@ import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ExportButton } from '@/components/editor/ExportButton';
 import { CodeExplanations } from '@/components/editor/CodeExplanations';
+import { VersionHistory, saveCodeVersion } from '@/components/editor/VersionHistory';
 import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
 import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
 import { DeploymentHistory } from '@/components/deployments';
@@ -55,6 +56,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [formatting, setFormatting] = useState(false);
   const [isProjectPublic, setIsProjectPublic] = useState(project.is_public || false);
   const [showExplanations, setShowExplanations] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const editorRef = useRef<any>(null);
   const supabase = createClient();
@@ -387,7 +389,7 @@ contract ${contractName} {
     }
   };
 
-  const saveFile = useCallback(async () => {
+  const saveFile = useCallback(async (versionMessage?: string) => {
     if (!activeFile) return;
 
     await supabase
@@ -395,9 +397,15 @@ contract ${contractName} {
       .update({ content: code })
       .eq('id', activeFile.id);
 
+    // Save version for manual saves
+    await saveCodeVersion(supabase, activeFile.id, code, versionMessage || 'Manual save');
+
     setFiles((prev) =>
       prev.map((f) => (f.id === activeFile.id ? { ...f, content: code } : f))
     );
+    
+    setSaveStatus('saved');
+    setLastSaved(new Date());
   }, [activeFile, code, supabase]);
 
   const compileCode = useCallback(async () => {
@@ -581,6 +589,15 @@ contract ${contractName} {
               {formatting ? '...' : '✨'}
             </Button>
             <Button 
+              variant={showVersionHistory ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setShowVersionHistory(!showVersionHistory)} 
+              className="text-xs px-2"
+              title="Version History"
+            >
+              🕐
+            </Button>
+            <Button 
               variant={showExplanations ? 'default' : 'ghost'} 
               size="sm" 
               onClick={() => setShowExplanations(!showExplanations)} 
@@ -678,6 +695,17 @@ contract ${contractName} {
               )}
             </Button>
             <Button 
+              variant={showVersionHistory ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setShowVersionHistory(!showVersionHistory)}
+              title="View version history"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              History
+            </Button>
+            <Button 
               variant={showExplanations ? 'default' : 'outline'} 
               size="sm" 
               onClick={() => setShowExplanations(!showExplanations)}
@@ -709,11 +737,21 @@ contract ${contractName} {
               code={code}
               contractName={activeFile?.filename.replace('.sol', '') || 'Contract'}
               compilationResult={compilationResult}
-              onCompile={compileCode}
+              onCompile={async () => {
+                // Save version before deploy attempt
+                if (activeFile) {
+                  await saveCodeVersion(supabase, activeFile.id, code, 'Pre-deploy snapshot');
+                }
+                await compileCode();
+              }}
               onDeploySuccess={(address, txHash) => {
                 setDeployedContract(address);
                 if (compilationResult?.abi) {
                   setContractAbi(compilationResult.abi);
+                }
+                // Save version after successful deploy
+                if (activeFile) {
+                  saveCodeVersion(supabase, activeFile.id, code, `Deployed to ${address.slice(0, 10)}...`);
                 }
               }}
             />
@@ -939,6 +977,20 @@ contract ${contractName} {
           </button>
         </div>
       </div>
+
+      {/* Version History Panel */}
+      {activeFile && (
+        <VersionHistory
+          fileId={activeFile.id}
+          currentCode={code}
+          isOpen={showVersionHistory}
+          onClose={() => setShowVersionHistory(false)}
+          onRestore={(content) => {
+            setCode(content);
+            setSaveStatus('unsaved');
+          }}
+        />
+      )}
 
       {/* Onboarding Tour */}
       <OnboardingTour 

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ProfileCard } from '@/components/profile/ProfileCard';
+import { ProfileFollowSection } from '@/components/profile/ProfileFollowSection';
 import { AchievementGrid, type Achievement, type UserAchievement } from '@/components/achievements/AchievementBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
