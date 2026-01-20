@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { LikeButton } from '@/components/showcase/LikeButton';
 import { ForkButton } from '@/components/showcase/ForkButton';
+import { ShareButton } from '@/components/social';
 import type { ProjectType } from '@/types';
+import type { Metadata } from 'next';
 
 const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
   nft_marketplace: 'NFT Marketplace',
@@ -24,6 +26,71 @@ const PROJECT_TYPE_COLORS: Record<ProjectType, string> = {
   social: 'bg-pink-500/10 text-pink-500 border-pink-500/20',
   creator: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
 };
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://zerotocryptodev.com';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data: project } = await supabase
+    .from('projects')
+    .select(`
+      *,
+      profiles!projects_user_id_fkey (
+        display_name
+      )
+    `)
+    .eq('id', id)
+    .eq('is_public', true)
+    .single();
+
+  if (!project) {
+    return {
+      title: 'Project Not Found | Zero to Crypto Dev',
+    };
+  }
+
+  const title = `${project.name} | Zero to Crypto Dev`;
+  const description = project.showcase_description || project.description || `A ${PROJECT_TYPE_LABELS[project.project_type as ProjectType]} project built on Base`;
+  const creatorName = project.profiles?.display_name || 'Anonymous';
+  
+  const ogImageUrl = new URL('/api/og', BASE_URL);
+  ogImageUrl.searchParams.set('type', 'project');
+  ogImageUrl.searchParams.set('title', project.name);
+  ogImageUrl.searchParams.set('description', description.slice(0, 150));
+  ogImageUrl.searchParams.set('projectType', project.project_type);
+  ogImageUrl.searchParams.set('userName', creatorName);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      url: `${BASE_URL}/showcase/${id}`,
+      images: [
+        {
+          url: ogImageUrl.toString(),
+          width: 1200,
+          height: 630,
+          alt: project.name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl.toString()],
+    },
+  };
+}
 
 export default async function ShowcaseProjectPage({
   params,
@@ -177,6 +244,19 @@ export default async function ShowcaseProjectPage({
                   projectId={project.id}
                   projectName={project.name}
                   isLoggedIn={!!user}
+                />
+
+                {/* Share Button */}
+                <ShareButton
+                  shareData={{
+                    title: project.name,
+                    text: `Check out "${project.name}" - a ${PROJECT_TYPE_LABELS[project.project_type as ProjectType]} project built on Zero to Crypto Dev! 🚀`,
+                    url: `${BASE_URL}/showcase/${project.id}`,
+                  }}
+                  previewTitle={project.name}
+                  previewDescription={project.showcase_description || project.description}
+                  variant="outline"
+                  className="w-full"
                 />
 
                 {/* View Contract */}

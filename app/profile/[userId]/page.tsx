@@ -5,7 +5,9 @@ import { ProfileCard } from '@/components/profile/ProfileCard';
 import { AchievementGrid, type Achievement, type UserAchievement } from '@/components/achievements/AchievementBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ShareButton } from '@/components/social';
 import type { ProjectType } from '@/types';
+import type { Metadata } from 'next';
 
 const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
   nft_marketplace: 'NFT',
@@ -24,6 +26,81 @@ const PROJECT_TYPE_COLORS: Record<ProjectType, string> = {
   social: 'bg-pink-500/10 text-pink-500 border-pink-500/20',
   creator: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
 };
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://zerotocryptodev.com';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}): Promise<Metadata> {
+  const { userId } = await params;
+  const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (!profile) {
+    return {
+      title: 'Profile Not Found | Zero to Crypto Dev',
+    };
+  }
+
+  // Get some stats for the OG image
+  const { count: projectsCount } = await supabase
+    .from('projects')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_public', true);
+
+  const { data: userAchievements } = await supabase
+    .from('user_achievements')
+    .select('id')
+    .eq('user_id', userId);
+
+  const displayName = profile.display_name || 'Web3 Developer';
+  const title = `${displayName} | Zero to Crypto Dev`;
+  const description = `Check out ${displayName}'s Web3 development journey on Zero to Crypto Dev. ${projectsCount || 0} projects built, ${userAchievements?.length || 0} achievements earned.`;
+
+  const stats = JSON.stringify({
+    projects: projectsCount || 0,
+    achievements: userAchievements?.length || 0,
+    streak: profile.current_streak || 0,
+  });
+
+  const ogImageUrl = new URL('/api/og', BASE_URL);
+  ogImageUrl.searchParams.set('type', 'profile');
+  ogImageUrl.searchParams.set('title', displayName);
+  ogImageUrl.searchParams.set('stats', stats);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'profile',
+      url: `${BASE_URL}/profile/${userId}`,
+      images: [
+        {
+          url: ogImageUrl.toString(),
+          width: 1200,
+          height: 630,
+          alt: `${displayName}'s Profile`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl.toString()],
+    },
+  };
+}
 
 interface PublicProfilePageProps {
   params: Promise<{ userId: string }>;
@@ -136,16 +213,29 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
       </nav>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Back link */}
-        <Link
-          href="/showcase"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Showcase
-        </Link>
+        {/* Header with back link and share */}
+        <div className="flex items-center justify-between mb-6">
+          <Link
+            href="/showcase"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Showcase
+          </Link>
+          <ShareButton
+            shareData={{
+              title: `${profile.display_name || 'Web3 Developer'} on Zero to Crypto Dev`,
+              text: `Check out ${profile.display_name || 'this developer'}'s Web3 projects on Zero to Crypto Dev! 🚀`,
+              url: `${BASE_URL}/profile/${userId}`,
+            }}
+            previewTitle={profile.display_name || 'Web3 Developer'}
+            previewDescription={`${stats.projectsCreated} projects built • ${userAchievements?.length || 0} achievements earned`}
+            variant="outline"
+            size="sm"
+          />
+        </div>
 
         {/* Profile Card */}
         <ProfileCard

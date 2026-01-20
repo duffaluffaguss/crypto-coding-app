@@ -2,12 +2,84 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Certificate } from '@/components/certificate/Certificate';
-import { ShareButtons } from '@/components/certificate/ShareButtons';
+import { ShareButtons } from '@/components/social';
 import { Button } from '@/components/ui/button';
 import { CertificateActions } from './CertificateActions';
+import type { Metadata } from 'next';
+
+const PROJECT_TYPE_LABELS: Record<string, string> = {
+  nft_marketplace: 'NFT Marketplace',
+  token: 'Token',
+  dao: 'DAO',
+  game: 'Game',
+  social: 'Social Platform',
+  creator: 'Creator Economy',
+};
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://zerotocryptodev.com';
 
 interface PageProps {
   params: Promise<{ projectId: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { projectId } = await params;
+  const supabase = await createClient();
+
+  const { data: project } = await supabase
+    .from('projects')
+    .select(`
+      *,
+      profiles!projects_user_id_fkey (
+        display_name
+      )
+    `)
+    .eq('id', projectId)
+    .single();
+
+  if (!project) {
+    return {
+      title: 'Certificate Not Found | Zero to Crypto Dev',
+    };
+  }
+
+  const userName = project.profiles?.display_name || 'Web3 Developer';
+  const projectType = PROJECT_TYPE_LABELS[project.project_type] || project.project_type;
+  const title = `Certificate: ${project.name} | Zero to Crypto Dev`;
+  const description = `${userName} successfully completed building "${project.name}" - a ${projectType} project on Zero to Crypto Dev.`;
+
+  const ogImageUrl = new URL('/api/og', BASE_URL);
+  ogImageUrl.searchParams.set('type', 'certificate');
+  ogImageUrl.searchParams.set('title', project.name);
+  ogImageUrl.searchParams.set('userName', userName);
+  ogImageUrl.searchParams.set('projectType', project.project_type);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      url: `${BASE_URL}/certificate/${projectId}`,
+      images: [
+        {
+          url: ogImageUrl.toString(),
+          width: 1200,
+          height: 630,
+          alt: `Certificate for ${project.name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl.toString()],
+    },
+  };
 }
 
 function generateCertificateId(projectId: string, completedAt: string): string {
@@ -134,9 +206,14 @@ export default async function CertificatePage({ params }: PageProps) {
               Share your achievement
             </h2>
             <ShareButtons
-              projectName={project.name}
-              certificateUrl={certificateUrl}
-              contractAddress={project.contract_address}
+              shareData={{
+                title: `Certificate: ${project.name}`,
+                text: project.contract_address
+                  ? `🎉 I just completed building "${project.name}" and deployed it to the Base network! Check out my certificate from Zero to Crypto Dev:`
+                  : `🎉 I just completed building "${project.name}" with Zero to Crypto Dev! Check out my certificate:`,
+                url: certificateUrl,
+              }}
+              className="justify-center"
             />
           </div>
 
