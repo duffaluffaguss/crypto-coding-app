@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { NETWORKS, DEFAULT_NETWORK, getTxExplorerUrl, type NetworkId } from '@/lib/networks';
 import { logContractDeployed } from '@/lib/activity';
 import { GasEstimate, GasEstimateInline } from './GasEstimate';
+import { VerifyButton } from './VerifyButton';
 import type { CompilationResult } from '@/types';
 
 interface GasEstimateData {
@@ -412,6 +413,17 @@ export function DeployButton({
         <div className="text-xs bg-green-500/10 text-green-500 px-2 py-1 rounded">
           Contract: {deployedAddress.slice(0, 10)}...{deployedAddress.slice(-8)}
         </div>
+      )}
+
+      {/* Contract Verification */}
+      {deployedAddress && status === 'success' && selectedNetwork === 'base-mainnet' && (
+        <VerifyButton
+          contractAddress={deployedAddress}
+          contractName={contractName}
+          sourceCode={code}
+          compilationResult={compilationResult}
+          className="mt-2"
+        />
       )}
 
       {/* Error */}
