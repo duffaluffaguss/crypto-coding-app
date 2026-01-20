@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Podium, LeaderboardTable, type LeaderboardUser } from '@/components/leaderboard';
 import { LeagueBadge, LeagueLegend } from '@/components/leaderboard/LeagueBadge';
 import { cn } from '@/lib/utils';
-import { type TimePeriod, type RisingStarUser, getLeagueFromRank } from '@/lib/leaderboard';
+import { type TimePeriod, type RisingStarUser, getLeagueFromPoints } from '@/lib/leaderboard';
 
 interface LeaderboardEntry {
   id: string;
@@ -94,9 +94,11 @@ export function LeaderboardContent({
   const currentRank = currentData.currentUserRanks[activeMetric];
   const currentUserInTop50 = currentUsers.some((u) => u.id === currentUserId);
 
-  // Get user's league based on all-time points rank
+  // Get user's league based on actual points (need to get from data)
   const userAllTimePointsRank = allTimeData.currentUserRanks.points;
-  const userLeague = getLeagueFromRank(userAllTimePointsRank);
+  // Get user's points from the leaderboard data
+  const userPoints = allTimeData.byPoints.find(u => u.id === currentUserId)?.value || 0;
+  const userLeague = getLeagueFromPoints(userPoints);
 
   const handlePeriodChange = (period: TimePeriod) => {
     setActivePeriod(period);
@@ -118,14 +120,12 @@ export function LeaderboardContent({
         <CardContent className="py-4">
           <div className="flex flex-col items-center gap-4">
             {/* League Badge */}
-            {userAllTimePointsRank && (
-              <div className="flex flex-col items-center gap-2">
-                <LeagueBadge rank={userAllTimePointsRank} size="lg" />
-                <span className="text-sm text-muted-foreground">
-                  Your League (All-Time Rank #{userAllTimePointsRank})
-                </span>
-              </div>
-            )}
+            <div className="flex flex-col items-center gap-2">
+              <LeagueBadge points={userPoints} size="lg" />
+              <span className="text-sm text-muted-foreground">
+                Your League ({userPoints} points)
+              </span>
+            </div>
             
             {/* Ranks */}
             <div className="flex items-center justify-center gap-8 flex-wrap">
@@ -352,7 +352,7 @@ export function LeaderboardContent({
           💡 Complete lessons, earn achievements, and maintain your streak to climb the leaderboard!
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          Leagues are based on your all-time points rank. Keep earning to reach Diamond! 💎
+          Leagues are based on your total achievement points. Earn 1001+ points to reach Diamond! 💎
         </p>
       </div>
     </div>

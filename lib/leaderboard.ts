@@ -11,8 +11,8 @@ export interface LeagueInfo {
   color: string;
   bgColor: string;
   borderColor: string;
-  minPosition?: number;
-  maxPosition?: number;
+  minPoints: number;
+  maxPoints?: number;
 }
 
 export const LEAGUES: Record<LeagueRank, LeagueInfo> = {
@@ -23,7 +23,7 @@ export const LEAGUES: Record<LeagueRank, LeagueInfo> = {
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500/10',
     borderColor: 'border-cyan-500/30',
-    maxPosition: 10,
+    minPoints: 1001,
   },
   gold: {
     rank: 'gold',
@@ -32,8 +32,8 @@ export const LEAGUES: Record<LeagueRank, LeagueInfo> = {
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-500/10',
     borderColor: 'border-yellow-500/30',
-    minPosition: 11,
-    maxPosition: 50,
+    minPoints: 501,
+    maxPoints: 1000,
   },
   silver: {
     rank: 'silver',
@@ -42,8 +42,8 @@ export const LEAGUES: Record<LeagueRank, LeagueInfo> = {
     color: 'text-gray-300',
     bgColor: 'bg-gray-400/10',
     borderColor: 'border-gray-400/30',
-    minPosition: 51,
-    maxPosition: 100,
+    minPoints: 101,
+    maxPoints: 500,
   },
   bronze: {
     rank: 'bronze',
@@ -52,10 +52,20 @@ export const LEAGUES: Record<LeagueRank, LeagueInfo> = {
     color: 'text-orange-400',
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/30',
-    minPosition: 101,
+    minPoints: 0,
+    maxPoints: 100,
   },
 };
 
+export function getLeagueFromPoints(points: number | null): LeagueInfo {
+  if (points === null || points <= 100) return LEAGUES.bronze;
+  if (points >= 1001) return LEAGUES.diamond;
+  if (points >= 501) return LEAGUES.gold;
+  if (points >= 101) return LEAGUES.silver;
+  return LEAGUES.bronze;
+}
+
+// Keep the old function for backwards compatibility where rank is still needed
 export function getLeagueFromRank(rank: number | null): LeagueInfo {
   if (rank === null) return LEAGUES.bronze;
   if (rank <= 10) return LEAGUES.diamond;

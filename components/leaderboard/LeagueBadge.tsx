@@ -1,10 +1,11 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type LeagueInfo, type LeagueRank, LEAGUES, getLeagueFromRank } from '@/lib/leaderboard';
+import { type LeagueInfo, type LeagueRank, LEAGUES, getLeagueFromPoints, getLeagueFromRank } from '@/lib/leaderboard';
 
 interface LeagueBadgeProps {
-  rank: number | null;
+  points?: number | null;
+  rank?: number | null;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
   className?: string;
@@ -25,8 +26,8 @@ const sizeClasses = {
   },
 };
 
-export function LeagueBadge({ rank, size = 'md', showLabel = true, className }: LeagueBadgeProps) {
-  const league = getLeagueFromRank(rank);
+export function LeagueBadge({ points, rank, size = 'md', showLabel = true, className }: LeagueBadgeProps) {
+  const league = points !== undefined ? getLeagueFromPoints(points) : getLeagueFromRank(rank);
   const sizeClass = sizeClasses[size];
 
   return (
@@ -46,24 +47,24 @@ export function LeagueBadge({ rank, size = 'md', showLabel = true, className }: 
   );
 }
 
-interface LeagueBadgeWithTooltipProps extends LeagueBadgeProps {
-  currentRank: number | null;
+interface LeagueBadgeWithProgressProps extends LeagueBadgeProps {
+  currentPoints?: number | null;
 }
 
-export function LeagueBadgeWithProgress({ rank, currentRank, size = 'md', className }: LeagueBadgeWithTooltipProps) {
-  const league = getLeagueFromRank(rank);
-  const sizeClass = sizeClasses[size];
+export function LeagueBadgeWithProgress({ points, rank, currentPoints, size = 'md', className }: LeagueBadgeWithProgressProps) {
+  const league = points !== undefined ? getLeagueFromPoints(points) : getLeagueFromRank(rank);
+  const userPoints = currentPoints || points || 0;
   
-  // Calculate progress to next league
-  const getNextLeagueInfo = (): { nextLeague: LeagueInfo | null; usersAway: number } | null => {
-    if (rank === null || rank <= 10) return null; // Already Diamond or no rank
+  // Calculate progress to next league based on points
+  const getNextLeagueInfo = (): { nextLeague: LeagueInfo | null; pointsNeeded: number } | null => {
+    if (userPoints >= 1001) return null; // Already Diamond
     
-    if (rank <= 50) {
-      return { nextLeague: LEAGUES.diamond, usersAway: rank - 10 };
-    } else if (rank <= 100) {
-      return { nextLeague: LEAGUES.gold, usersAway: rank - 50 };
+    if (userPoints >= 501) {
+      return { nextLeague: LEAGUES.diamond, pointsNeeded: 1001 - userPoints };
+    } else if (userPoints >= 101) {
+      return { nextLeague: LEAGUES.gold, pointsNeeded: 501 - userPoints };
     } else {
-      return { nextLeague: LEAGUES.silver, usersAway: rank - 100 };
+      return { nextLeague: LEAGUES.silver, pointsNeeded: 101 - userPoints };
     }
   };
 
@@ -71,10 +72,10 @@ export function LeagueBadgeWithProgress({ rank, currentRank, size = 'md', classN
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <LeagueBadge rank={rank} size={size} className={className} />
-      {nextInfo && currentRank && (
+      <LeagueBadge points={points} rank={rank} size={size} className={className} />
+      {nextInfo && (
         <span className="text-xs text-muted-foreground">
-          {nextInfo.usersAway} away from {nextInfo.nextLeague?.label}
+          {nextInfo.pointsNeeded} pts to {nextInfo.nextLeague?.label}
         </span>
       )}
     </div>
@@ -89,14 +90,16 @@ export function LeagueLegend({ className }: { className?: string }) {
     <div className={cn('flex flex-wrap gap-4 justify-center', className)}>
       {leagues.map((leagueKey) => {
         const league = LEAGUES[leagueKey];
+        const pointRange = league.maxPoints 
+          ? `${league.minPoints}-${league.maxPoints} pts` 
+          : `${league.minPoints}+ pts`;
+        
         return (
           <div key={leagueKey} className="flex items-center gap-2 text-sm">
             <span className="text-lg">{league.icon}</span>
             <span className={league.color}>{league.label}</span>
             <span className="text-muted-foreground text-xs">
-              {league.maxPosition 
-                ? `Top ${league.maxPosition}` 
-                : `${league.minPosition}+`}
+              {pointRange}
             </span>
           </div>
         );
