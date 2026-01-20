@@ -1,0 +1,19 @@
+name: Preview Deployment
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  preview-info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preview Deployment Notice
+        run: |
+          echo "## 🚀 Preview Deployment"
+          echo ""
+          echo "Preview deployments are automatically handled by Vercel."
+          echo "Check the PR comments for the preview URL once the Vercel bot posts it."
+          echo ""
+          echo "The preview will be available at a URL like:"
+          echo "https://crypto-coding-app-<unique-id>-<your-vercel-team>.vercel.app"
