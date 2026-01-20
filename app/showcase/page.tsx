@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShowcaseFilters } from '@/components/showcase/ShowcaseFilters';
+import { ShowcaseProjectCard } from '@/components/showcase/ShowcaseProjectCard';
 import type { ProjectType } from '@/types';
 
 interface ShowcaseProject {
@@ -154,66 +155,20 @@ export default async function ShowcasePage({
         {projects && projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <Link key={project.id} href={`/showcase/${project.id}`}>
-                <Card className="h-full hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="truncate group-hover:text-primary transition-colors">
-                          {project.name}
-                        </CardTitle>
-                        <CardDescription className="mt-1">
-                          by {(project.profiles as any)?.display_name || 'Anonymous'}
-                        </CardDescription>
-                      </div>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full border ${
-                          PROJECT_TYPE_COLORS[project.project_type as ProjectType]
-                        }`}
-                      >
-                        {PROJECT_TYPE_LABELS[project.project_type as ProjectType]}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                      {project.showcase_description || project.description}
-                    </p>
-                    <div className="flex items-center justify-between pt-4 border-t border-border">
-                      <div className="flex items-center gap-4 text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <svg
-                            className="w-4 h-4"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                          </svg>
-                          <span className="text-sm">{project.likes_count}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                          <span className="text-sm">{project.comments_count || 0}</span>
-                        </div>
-                      </div>
-                      {project.contract_address && (
-                        <div className="text-xs text-muted-foreground">
-                          <span className="px-2 py-1 rounded bg-green-500/10 text-green-500">
-                            Deployed
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ShowcaseProjectCard
+                key={project.id}
+                project={{
+                  id: project.id,
+                  name: project.name,
+                  project_type: project.project_type,
+                  showcase_description: project.showcase_description,
+                  description: project.description,
+                  likes_count: project.likes_count,
+                  comments_count: project.comments_count,
+                  contract_address: project.contract_address,
+                  profiles: project.profiles as unknown as { display_name: string | null } | null,
+                }}
+              />
             ))}
           </div>
         ) : (

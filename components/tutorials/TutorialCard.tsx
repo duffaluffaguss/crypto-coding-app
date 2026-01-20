@@ -1,8 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tutorial, categoryLabels, categoryColors, difficultyColors } from '@/lib/tutorials';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
+import { createClient } from '@/lib/supabase/client';
 
 interface TutorialCardProps {
   tutorial: Tutorial;
@@ -11,6 +14,29 @@ interface TutorialCardProps {
 
 export function TutorialCard({ tutorial, isWatched }: TutorialCardProps) {
   const thumbnailUrl = `https://img.youtube.com/vi/${tutorial.youtubeId}/mqdefault.jpg`;
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    checkBookmarkStatus();
+  }, [tutorial.id]);
+
+  const checkBookmarkStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setIsLoggedIn(!!user);
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('item_type', 'lesson')
+      .eq('item_id', tutorial.id)
+      .single();
+
+    setIsBookmarked(!!data);
+  };
 
   return (
     <Link href={`/tutorials/${tutorial.id}`}>
@@ -25,6 +51,18 @@ export function TutorialCard({ tutorial, isWatched }: TutorialCardProps) {
           {/* Duration Badge */}
           <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 text-white text-xs font-medium rounded">
             {tutorial.duration}
+          </div>
+          {/* Bookmark Button */}
+          <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <BookmarkButton
+              itemType="lesson"
+              itemId={tutorial.id}
+              initialBookmarked={isBookmarked}
+              isLoggedIn={isLoggedIn}
+              variant="outline"
+              className="bg-background/80 hover:bg-background"
+              onToggle={setIsBookmarked}
+            />
           </div>
           {/* Watched Indicator */}
           {isWatched && (

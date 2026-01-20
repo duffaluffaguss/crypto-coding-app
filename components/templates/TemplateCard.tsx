@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ContractTemplate, getDifficultyColor, getCategoryColor } from '@/lib/contract-templates';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
+import { createClient } from '@/lib/supabase/client';
 
 interface TemplateCardProps {
   template: ContractTemplate;
@@ -13,6 +15,29 @@ interface TemplateCardProps {
 
 export function TemplateCard({ template, onUseTemplate }: TemplateCardProps) {
   const [showPreview, setShowPreview] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    checkBookmarkStatus();
+  }, [template.id]);
+
+  const checkBookmarkStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setIsLoggedIn(!!user);
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('item_type', 'template')
+      .eq('item_id', template.id)
+      .single();
+
+    setIsBookmarked(!!data);
+  };
 
   return (
     <>
@@ -33,6 +58,13 @@ export function TemplateCard({ template, onUseTemplate }: TemplateCardProps) {
                 </div>
               </div>
             </div>
+            <BookmarkButton
+              itemType="template"
+              itemId={template.id}
+              initialBookmarked={isBookmarked}
+              isLoggedIn={isLoggedIn}
+              onToggle={setIsBookmarked}
+            />
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

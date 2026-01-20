@@ -7,6 +7,7 @@ import { LikeButton } from '@/components/showcase/LikeButton';
 import { ForkButton } from '@/components/showcase/ForkButton';
 import { ShareButton } from '@/components/social';
 import { CommentSection } from '@/components/comments';
+import { ShowcaseBookmarkButton } from '@/components/showcase/ShowcaseBookmarkButton';
 import type { ProjectType } from '@/types';
 import type { Metadata } from 'next';
 
@@ -262,6 +263,12 @@ export default async function ShowcaseProjectPage({
                   projectId={project.id}
                   initialLikes={project.likes_count || 0}
                   initialHasLiked={hasLiked}
+                  isLoggedIn={!!user}
+                />
+
+                {/* Bookmark Button */}
+                <ShowcaseBookmarkButton
+                  projectId={project.id}
                   isLoggedIn={!!user}
                 />
 
