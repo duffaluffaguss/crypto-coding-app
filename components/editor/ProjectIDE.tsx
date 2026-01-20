@@ -13,6 +13,7 @@ import { ExportButton } from '@/components/editor/ExportButton';
 import { CodeExplanations } from '@/components/editor/CodeExplanations';
 import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
 import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
+import { DeploymentHistory } from '@/components/deployments';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -829,6 +830,7 @@ contract ${contractName} {
                 {deployedContract && compilationResult?.abi && (
                   <ContractInteraction contractAddress={deployedContract} abi={compilationResult.abi} />
                 )}
+                <DeploymentHistory projectId={project.id} />
               </div>
             )}
             {mobileTab === 'lessons' && (
@@ -879,6 +881,7 @@ contract ${contractName} {
             {deployedContract && compilationResult?.abi && (
               <ContractInteraction contractAddress={deployedContract} abi={compilationResult.abi} />
             )}
+            <DeploymentHistory projectId={project.id} />
           </div>
 
           {/* Desktop: Code Explanations Panel */}

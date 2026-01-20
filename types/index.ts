@@ -176,3 +176,18 @@ export interface DeploymentResult {
   transactionHash?: string;
   error?: string;
 }
+
+export interface Deployment {
+  id: string;
+  project_id: string;
+  user_id: string;
+  contract_address: string;
+  tx_hash: string;
+  network: Network;
+  gas_used: number | null;
+  contract_name: string | null;
+  created_at: string;
+  // Joined fields
+  project_name?: string;
+  project_type?: ProjectType;
+}

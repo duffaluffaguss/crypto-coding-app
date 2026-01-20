@@ -135,7 +135,7 @@ export function DeployButton({
         setStatus('success');
 
         // Save to database including ABI for frontend generation
-        await saveDeployment(receipt.contractAddress, hash, abi);
+        await saveDeployment(receipt.contractAddress, hash, abi, receipt.gasUsed);
         onDeploySuccess(receipt.contractAddress, hash);
       } else {
         setStatus('error');
@@ -151,7 +151,7 @@ export function DeployButton({
     }
   };
 
-  const saveDeployment = async (contractAddress: string, transactionHash: string, abi: any[]) => {
+  const saveDeployment = async (contractAddress: string, transactionHash: string, abi: any[], gasUsed?: bigint) => {
     try {
       // Get user for activity logging
       const { data: { user } } = await supabase.auth.getUser();
@@ -167,8 +167,21 @@ export function DeployButton({
         })
         .eq('id', projectId);
 
-      // Log activity
+      // Save to deployments history table
       if (user) {
+        await supabase
+          .from('deployments')
+          .insert({
+            project_id: projectId,
+            user_id: user.id,
+            contract_address: contractAddress,
+            tx_hash: transactionHash,
+            network: selectedNetwork,
+            gas_used: gasUsed ? Number(gasUsed) : null,
+            contract_name: contractName,
+          });
+
+        // Log activity
         await logContractDeployed(
           supabase,
           user.id,
