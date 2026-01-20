@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface UserAvatarProps {
   displayName?: string | null;
   email?: string | null;
+  avatarUrl?: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
@@ -53,13 +55,36 @@ function getColorFromString(str: string): string {
 export function UserAvatar({
   displayName,
   email,
+  avatarUrl,
   size = 'md',
   className,
 }: UserAvatarProps) {
+  const [imageError, setImageError] = useState(false);
   const initials = getInitials(displayName, email);
   const colorKey = displayName || email || 'default';
   const bgColor = getColorFromString(colorKey);
 
+  // If we have a valid avatar URL and the image hasn't errored, show it
+  if (avatarUrl && !imageError) {
+    return (
+      <div
+        className={cn(
+          'relative rounded-full overflow-hidden bg-muted',
+          sizeClasses[size],
+          className
+        )}
+      >
+        <img
+          src={avatarUrl}
+          alt={displayName || 'User avatar'}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      </div>
+    );
+  }
+
+  // Fallback to initials
   return (
     <div
       className={cn(

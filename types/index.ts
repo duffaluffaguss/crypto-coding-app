@@ -19,6 +19,12 @@ export interface Profile {
   experience_level: ExperienceLevel | null;
   created_at: string;
   onboarding_completed: boolean;
+  // Profile customization fields
+  bio: string | null;
+  website_url: string | null;
+  twitter_handle: string | null;
+  github_username: string | null;
+  avatar_url: string | null;
 }
 
 export interface Project {

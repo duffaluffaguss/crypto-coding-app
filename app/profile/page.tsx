@@ -146,6 +146,13 @@ export default async function ProfilePage() {
           <ProfileCard
             displayName={profile?.display_name}
             email={user.email}
+            bio={profile?.bio}
+            avatarUrl={profile?.avatar_url}
+            socialLinks={{
+              websiteUrl: profile?.website_url,
+              twitterHandle: profile?.twitter_handle,
+              githubUsername: profile?.github_username,
+            }}
             memberSince={profile?.created_at || user.created_at}
             stats={stats}
             isOwnProfile={true}
@@ -153,6 +160,10 @@ export default async function ProfilePage() {
           <div className="absolute top-4 right-4">
             <EditProfileModal
               currentDisplayName={profile?.display_name}
+              currentBio={profile?.bio}
+              currentWebsiteUrl={profile?.website_url}
+              currentTwitterHandle={profile?.twitter_handle}
+              currentGithubUsername={profile?.github_username}
               userId={user.id}
             />
           </div>

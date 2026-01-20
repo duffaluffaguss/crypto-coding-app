@@ -240,6 +240,13 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
         {/* Profile Card */}
         <ProfileCard
           displayName={profile.display_name}
+          bio={profile.bio}
+          avatarUrl={profile.avatar_url}
+          socialLinks={{
+            websiteUrl: profile.website_url,
+            twitterHandle: profile.twitter_handle,
+            githubUsername: profile.github_username,
+          }}
           memberSince={profile.created_at}
           stats={stats}
           isOwnProfile={false}
