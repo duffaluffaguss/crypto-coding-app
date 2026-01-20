@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { StreakDisplay } from '@/components/gamification/StreakDisplay';
 import { UserAvatarDropdown } from '@/components/profile/UserAvatarDropdown';
 
-export default async function DashboardLayout({
+export default async function LeaderboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -49,7 +49,7 @@ export default async function DashboardLayout({
             </Link>
             <Link
               href="/leaderboard"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm text-foreground font-medium transition-colors"
             >
               Leaderboard
             </Link>
