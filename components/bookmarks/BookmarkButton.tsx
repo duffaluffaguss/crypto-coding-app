@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 
-export type BookmarkItemType = 'template' | 'project' | 'lesson';
+export type BookmarkItemType = 'template' | 'project' | 'lesson' | 'snippet';
 
 interface BookmarkButtonProps {
   itemType: BookmarkItemType;

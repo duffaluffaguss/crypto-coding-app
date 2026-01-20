@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 import { createClient } from '@/lib/supabase/client';
 import { logLessonCompleted } from '@/lib/activity';
 import { VerificationModal, VerificationErrorModal } from './VerificationModal';
@@ -333,6 +334,15 @@ export function LessonSidebar({
                     )}
                     {/* Help thread indicator */}
                     <LessonHelpStats lessonId={lesson.id} className="mt-1.5" />
+                  </div>
+                  <div className="ml-2" onClick={(e) => e.stopPropagation()}>
+                    <BookmarkButton
+                      itemType="lesson"
+                      itemId={lesson.id}
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                    />
                   </div>
                 </div>
               </button>

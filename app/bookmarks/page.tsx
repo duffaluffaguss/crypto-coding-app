@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { contractTemplates, ContractTemplate, getDifficultyColor, getCategoryColor } from '@/lib/contract-templates';
 import { tutorials, Tutorial, categoryLabels, categoryColors, difficultyColors } from '@/lib/tutorials';
+import { CODE_SNIPPETS, SNIPPET_CATEGORIES, type CodeSnippet } from '@/lib/code-snippets';
 import type { BookmarkItemType } from '@/components/bookmarks/BookmarkButton';
 
-type TabType = 'templates' | 'projects' | 'lessons';
+type TabType = 'templates' | 'projects' | 'lessons' | 'snippets';
 
 interface Bookmark {
   id: string;
@@ -141,6 +142,7 @@ export default function BookmarksPage() {
     if (activeTab === 'templates') return b.item_type === 'template';
     if (activeTab === 'projects') return b.item_type === 'project';
     if (activeTab === 'lessons') return b.item_type === 'lesson';
+    if (activeTab === 'snippets') return b.item_type === 'snippet';
     return false;
   });
 
@@ -152,10 +154,15 @@ export default function BookmarksPage() {
     return tutorials.find((t) => t.id === id);
   };
 
+  const getSnippetById = (id: string): CodeSnippet | undefined => {
+    return CODE_SNIPPETS.find((s) => s.id === id);
+  };
+
   const tabCounts = {
     templates: bookmarks.filter((b) => b.item_type === 'template').length,
     projects: bookmarks.filter((b) => b.item_type === 'project').length,
     lessons: bookmarks.filter((b) => b.item_type === 'lesson').length,
+    snippets: bookmarks.filter((b) => b.item_type === 'snippet').length,
   };
 
   if (!isLoggedIn) {
@@ -204,13 +211,13 @@ export default function BookmarksPage() {
             <h1 className="text-3xl font-bold">My Bookmarks</h1>
           </div>
           <p className="text-muted-foreground">
-            Save templates, projects, and tutorials for quick access later.
+            Save templates, projects, tutorials, and code snippets for quick access later.
           </p>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-2 mb-8 border-b border-border">
-          {(['templates', 'projects', 'lessons'] as TabType[]).map((tab) => (
+          {(['templates', 'projects', 'lessons', 'snippets'] as TabType[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -253,10 +260,21 @@ export default function BookmarksPage() {
                 {activeTab === 'templates' && 'Browse templates and save your favorites for quick access.'}
                 {activeTab === 'projects' && 'Explore the showcase and bookmark projects that inspire you.'}
                 {activeTab === 'lessons' && 'Save tutorials to create your own learning playlist.'}
+                {activeTab === 'snippets' && 'Save useful code snippets while building your projects.'}
               </p>
-              <Link href={activeTab === 'templates' ? '/templates' : activeTab === 'projects' ? '/showcase' : '/tutorials'}>
+              <Link href={
+                activeTab === 'templates' ? '/templates' : 
+                activeTab === 'projects' ? '/showcase' : 
+                activeTab === 'snippets' ? '/dashboard' : 
+                '/tutorials'
+              }>
                 <Button>
-                  Browse {activeTab === 'templates' ? 'Templates' : activeTab === 'projects' ? 'Showcase' : 'Tutorials'}
+                  Browse {
+                    activeTab === 'templates' ? 'Templates' : 
+                    activeTab === 'projects' ? 'Showcase' : 
+                    activeTab === 'snippets' ? 'Editor' :
+                    'Tutorials'
+                  }
                 </Button>
               </Link>
             </CardContent>
@@ -431,6 +449,62 @@ export default function BookmarksPage() {
                     <Link href={`/tutorials/${tutorial.id}`}>
                       <Button size="sm" className="w-full">Watch Tutorial</Button>
                     </Link>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            {/* Code Snippet Bookmarks */}
+            {activeTab === 'snippets' && filteredBookmarks.map((bookmark) => {
+              const snippet = getSnippetById(bookmark.item_id);
+              if (!snippet) return null;
+              const categoryInfo = SNIPPET_CATEGORIES[snippet.category as keyof typeof SNIPPET_CATEGORIES];
+              return (
+                <Card key={bookmark.id} className="group hover:border-primary/50 transition-colors">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg font-semibold line-clamp-1">{snippet.name}</CardTitle>
+                        <CardDescription className="mt-1 line-clamp-2">
+                          {snippet.description}
+                        </CardDescription>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs bg-muted px-2 py-1 rounded-full flex items-center gap-1">
+                            <span>{categoryInfo?.icon}</span>
+                            <span>{categoryInfo?.name}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeBookmark(bookmark.id)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove bookmark"
+                      >
+                        <svg className="w-4 h-4 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <pre className="bg-muted/50 p-3 rounded-md text-xs overflow-x-auto max-h-32 border">
+                      <code>{snippet.code}</code>
+                    </pre>
+                    <div className="flex gap-2 mt-3">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => navigator.clipboard.writeText(snippet.code)}
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        Copy Code
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               );

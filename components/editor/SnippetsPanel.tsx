@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 import { CODE_SNIPPETS, SNIPPET_CATEGORIES, getSnippetsByCategory, type CodeSnippet } from '@/lib/code-snippets';
 
 interface SnippetsPanelProps {
@@ -94,15 +95,24 @@ export function SnippetsPanel({ onInsert, isOpen, onClose }: SnippetsPanelProps)
               >
                 <div className="p-3 border-b border-border">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-sm">{snippet.name}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {snippet.description}
                       </p>
                     </div>
-                    <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                      {SNIPPET_CATEGORIES[snippet.category as keyof typeof SNIPPET_CATEGORIES]?.icon}
-                    </span>
+                    <div className="flex items-start gap-2">
+                      <BookmarkButton
+                        itemType="snippet"
+                        itemId={snippet.id}
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6"
+                      />
+                      <span className="text-xs bg-muted px-2 py-0.5 rounded">
+                        {SNIPPET_CATEGORIES[snippet.category as keyof typeof SNIPPET_CATEGORIES]?.icon}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <pre className="p-3 text-xs bg-muted/30 overflow-x-auto max-h-32">
