@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { ChallengeCard, ChallengeStats, CommunityChallengeCard } from '@/components/challenges';
+import { ChallengeCard, ChallengeStats, ChallengeStreak, CommunityChallengeCard } from '@/components/challenges';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { generateWeeklyProgress, calculateChallengeStreak, getWeekBoundaries } from '@/lib/challenge-bonuses';
@@ -167,7 +167,7 @@ export default async function ChallengesPage() {
       </div>
 
       {/* Stats Section */}
-      <div className="mb-8">
+      <div className="mb-8 space-y-6">
         <ChallengeStats
           streak={streak}
           totalPoints={totalPoints}
@@ -175,6 +175,12 @@ export default async function ChallengesPage() {
           totalCompleted={totalCompleted}
           longestStreak={longestStreak}
         />
+        {/* Enhanced Streak Display */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ChallengeStreak />
+          </div>
+        </div>
       </div>
 
       {/* Today's Challenge */}
