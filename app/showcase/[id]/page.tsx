@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { LikeButton } from '@/components/showcase/LikeButton';
 import CloneButton from '@/components/project/CloneButton';
 import { ShareButton } from '@/components/social';
-import { CommentSection } from '@/components/comments';
+import { CommentSection } from '@/components/showcase/CommentSection';
 import { ShowcaseBookmarkButton } from '@/components/showcase/ShowcaseBookmarkButton';
 import type { ProjectType } from '@/types';
 import type { Metadata } from 'next';
@@ -140,22 +140,7 @@ export default async function ShowcaseProjectPage({
     hasLiked = !!like;
   }
 
-  // Fetch comments
-  const { data: comments } = await supabase
-    .from('project_comments')
-    .select(`
-      id,
-      content,
-      created_at,
-      user_id,
-      profiles (
-        id,
-        display_name,
-        avatar_url
-      )
-    `)
-    .eq('project_id', id)
-    .order('created_at', { ascending: false });
+  // Comments are now loaded within the CommentSection component
 
   const mainFile = files?.find(f => f.file_type === 'solidity') || files?.[0];
 
@@ -242,12 +227,7 @@ export default async function ShowcaseProjectPage({
             )}
 
             {/* Comments Section */}
-            <CommentSection
-              projectId={project.id}
-              initialComments={comments || []}
-              isLoggedIn={!!user}
-              currentUserId={user?.id}
-            />
+            <CommentSection projectId={project.id} />
           </div>
 
           {/* Sidebar */}
