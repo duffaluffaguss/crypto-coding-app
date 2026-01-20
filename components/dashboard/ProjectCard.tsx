@@ -14,6 +14,7 @@ interface ProjectCardProps {
     status: string;
     description: string | null;
     contract_address: string | null;
+    deployments_count?: number;
   };
 }
 
@@ -60,15 +61,34 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <p className="text-sm text-muted-foreground line-clamp-2">
               {project.description}
             </p>
-            {project.contract_address && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground">
-                  Contract:{' '}
-                  <code className="text-primary">
-                    {project.contract_address.slice(0, 6)}...
-                    {project.contract_address.slice(-4)}
-                  </code>
-                </p>
+            {(project.contract_address || project.deployments_count) && (
+              <div className="mt-4 pt-4 border-t border-border space-y-2">
+                {project.contract_address && (
+                  <p className="text-xs text-muted-foreground">
+                    Contract:{' '}
+                    <code className="text-primary">
+                      {project.contract_address.slice(0, 6)}...
+                      {project.contract_address.slice(-4)}
+                    </code>
+                  </p>
+                )}
+                {project.deployments_count !== undefined && project.deployments_count > 0 && (
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span>{project.deployments_count} deployment{project.deployments_count !== 1 ? 's' : ''}</span>
+                    </div>
+                    <Link
+                      href={`/projects/${project.id}/deployments`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-primary hover:underline"
+                    >
+                      View History
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
             {/* Certificate Button for Completed Projects */}

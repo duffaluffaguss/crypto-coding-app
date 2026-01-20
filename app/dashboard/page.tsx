@@ -15,9 +15,18 @@ export default async function DashboardPage() {
 
   const { data: projects } = await supabase
     .from('projects')
-    .select('*')
+    .select(`
+      *,
+      deployments(count)
+    `)
     .eq('user_id', user!.id)
     .order('created_at', { ascending: false });
+
+  // Process projects to include deployment count
+  const projectsWithCounts = projects?.map(project => ({
+    ...project,
+    deployments_count: project.deployments?.[0]?.count || 0
+  })) || [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -90,9 +99,9 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {projects && projects.length > 0 ? (
+      {projectsWithCounts && projectsWithCounts.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {projectsWithCounts.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
