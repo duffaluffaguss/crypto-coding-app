@@ -54,6 +54,12 @@ export default async function LeaderboardLayout({
               Showcase
             </Link>
             <Link
+              href="/challenges"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Challenges
+            </Link>
+            <Link
               href="/leaderboard"
               className="text-sm text-foreground font-medium transition-colors"
             >
