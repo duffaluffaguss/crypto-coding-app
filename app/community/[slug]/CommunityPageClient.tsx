@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { PostCard } from '@/components/community/PostCard';
 import { CreatePostButton } from '@/components/community/CreatePostButton';
 import { MembersSidebar } from '@/components/community/MembersSidebar';
+import { ChatRoom, ChatFloatingButton } from '@/components/community/ChatRoom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, MessageSquare, HelpCircle, Sparkles } from 'lucide-react';
@@ -68,8 +69,22 @@ export function CommunityPageClient({
   const [isMember, setIsMember] = useState(initialIsMember);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [showMobileChat, setShowMobileChat] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // Get current user ID for chat
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id);
+    }
+    if (isAuthenticated) {
+      getUser();
+    }
+  }, [isAuthenticated, supabase.auth]);
 
   const handleJoin = async () => {
     if (!isAuthenticated) {
@@ -245,6 +260,19 @@ export function CommunityPageClient({
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Real-time Chat */}
+            <div className="hidden lg:block">
+              <ChatRoom
+                communityId={community.id}
+                communityName={community.name}
+                topicName={community.project_type?.replace('_', ' ')}
+                currentUserId={currentUserId}
+                isMember={isMember}
+                isCollapsed={isChatCollapsed}
+                onToggleCollapse={() => setIsChatCollapsed(!isChatCollapsed)}
+              />
+            </div>
+
             <MembersSidebar members={members} totalMembers={community.member_count} />
 
             {/* Quick Links */}
@@ -261,6 +289,36 @@ export function CommunityPageClient({
             )}
           </div>
         </div>
+
+        {/* Mobile Chat */}
+        {showMobileChat && (
+          <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm lg:hidden">
+            <div className="container mx-auto px-4 py-4 h-full flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Community Chat</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowMobileChat(false)}
+                >
+                  Close
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <ChatRoom
+                  communityId={community.id}
+                  communityName={community.name}
+                  topicName={community.project_type?.replace('_', ' ')}
+                  currentUserId={currentUserId}
+                  isMember={isMember}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Chat FAB */}
+        <ChatFloatingButton onClick={() => setShowMobileChat(true)} />
       </div>
     </div>
   );

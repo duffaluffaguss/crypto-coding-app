@@ -6,3 +6,5 @@ export { MembersSidebar } from './MembersSidebar';
 export { ExpertBadge, ExpertBadgeCompact, MultiExpertBadges } from './ExpertBadge';
 export { ReplyCard } from './ReplyCard';
 export { ReplyFilters, ReplyFiltersCompact } from './ReplyFilters';
+export { ChatRoom, ChatFloatingButton } from './ChatRoom';
+export { ChatMessage, ChatSystemMessage, ChatDateSeparator } from './ChatMessage';
