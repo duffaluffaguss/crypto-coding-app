@@ -46,11 +46,12 @@ export function CertificateActions({ certificateData }: CertificateActionsProps)
 
       // Capture the certificate
       const canvas = await html2canvas(tempContainer, {
-        scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-      });
+        windowWidth: 900,
+        windowHeight: 700,
+      } as any);
 
       // Clean up
       root.unmount();

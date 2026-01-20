@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { DeleteProjectButton } from './DeleteProjectButton';
 
 interface ProjectCardProps {
@@ -29,6 +30,8 @@ const getStatusColor = (status: string) => {
 };
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const isCompleted = project.status === 'deployed' || project.status === 'published';
+
   return (
     <div className="relative group">
       <Link href={`/projects/${project.id}`}>
@@ -65,6 +68,31 @@ export function ProjectCard({ project }: ProjectCardProps) {
                     {project.contract_address.slice(-4)}
                   </code>
                 </p>
+              </div>
+            )}
+            {/* Certificate Button for Completed Projects */}
+            {isCompleted && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <Link
+                  href={`/certificate/${project.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/20 hover:border-amber-500/40 text-amber-600 dark:text-amber-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                      />
+                    </svg>
+                    Get Certificate
+                  </Button>
+                </Link>
               </div>
             )}
           </CardContent>
