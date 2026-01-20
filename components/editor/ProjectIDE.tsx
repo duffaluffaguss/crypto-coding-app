@@ -10,6 +10,7 @@ import { ContractInteraction } from '@/components/wallet/ContractInteraction';
 import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ExportButton } from '@/components/editor/ExportButton';
+import { CodeExplanations } from '@/components/editor/CodeExplanations';
 import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
 import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
 import { createClient } from '@/lib/supabase/client';
@@ -52,7 +53,9 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formatting, setFormatting] = useState(false);
   const [isProjectPublic, setIsProjectPublic] = useState(project.is_public || false);
+  const [showExplanations, setShowExplanations] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const editorRef = useRef<any>(null);
   const supabase = createClient();
   const { showTour, startTour, endTour } = useTour();
 
@@ -82,6 +85,31 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
       setFormatting(false);
     }
   }, [code]);
+
+  // Highlight a specific line in the editor
+  const highlightLine = useCallback((lineNumber: number) => {
+    if (editorRef.current) {
+      const editor = editorRef.current;
+      // Scroll to the line
+      editor.revealLineInCenter(lineNumber);
+      // Set cursor position
+      editor.setPosition({ lineNumber, column: 1 });
+      // Select the entire line
+      editor.setSelection({
+        startLineNumber: lineNumber,
+        startColumn: 1,
+        endLineNumber: lineNumber,
+        endColumn: editor.getModel()?.getLineMaxColumn(lineNumber) || 1,
+      });
+      // Focus the editor
+      editor.focus();
+    }
+  }, []);
+
+  // Handle editor mount to get reference
+  const handleEditorDidMount = useCallback((editor: any) => {
+    editorRef.current = editor;
+  }, []);
 
   // Auto-save functionality - saves 2 seconds after user stops typing
   const autoSave = useCallback(async () => {
@@ -551,6 +579,15 @@ contract ${contractName} {
             <Button variant="ghost" size="sm" onClick={formatCode} disabled={formatting} className="text-xs px-2">
               {formatting ? '...' : '✨'}
             </Button>
+            <Button 
+              variant={showExplanations ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setShowExplanations(!showExplanations)} 
+              className="text-xs px-2"
+              title="Explain Code"
+            >
+              💡
+            </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} className="text-xs px-2">
               {compiling ? '...' : 'Compile'}
             </Button>
@@ -638,6 +675,18 @@ contract ${contractName} {
               ) : (
                 'Format'
               )}
+            </Button>
+            <Button 
+              variant={showExplanations ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setShowExplanations(!showExplanations)}
+              title="Explain this code line-by-line"
+              data-tour="explain"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Explain
             </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} data-tour="compile">
               {compiling ? (
@@ -745,23 +794,36 @@ contract ${contractName} {
           <div className="lg:hidden flex-1 flex flex-col overflow-hidden">
             {mobileTab === 'code' && (
               <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1">
-                  <MonacoEditor
-                    height="100%"
-                    language="sol"
-                    theme="vs-dark"
-                    value={code}
-                    onChange={handleCodeChange}
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 13,
-                      lineNumbers: 'on',
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                      tabSize: 4,
-                      wordWrap: 'on',
-                    }}
-                  />
+                <div className="flex-1 flex">
+                  <div className={`flex-1 ${showExplanations ? 'hidden' : ''}`}>
+                    <MonacoEditor
+                      height="100%"
+                      language="sol"
+                      theme="vs-dark"
+                      value={code}
+                      onChange={handleCodeChange}
+                      onMount={handleEditorDidMount}
+                      options={{
+                        minimap: { enabled: false },
+                        fontSize: 13,
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                        tabSize: 4,
+                        wordWrap: 'on',
+                      }}
+                    />
+                  </div>
+                  {showExplanations && (
+                    <div className="flex-1">
+                      <CodeExplanations
+                        code={code}
+                        isOpen={showExplanations}
+                        onClose={() => setShowExplanations(false)}
+                        onHighlightLine={highlightLine}
+                      />
+                    </div>
+                  )}
                 </div>
                 <CompilationOutput />
                 {deployedContract && compilationResult?.abi && (
@@ -801,6 +863,7 @@ contract ${contractName} {
                 theme="vs-dark"
                 value={code}
                 onChange={handleCodeChange}
+                onMount={handleEditorDidMount}
                 options={{
                   minimap: { enabled: false },
                   fontSize: 14,
@@ -817,6 +880,14 @@ contract ${contractName} {
               <ContractInteraction contractAddress={deployedContract} abi={compilationResult.abi} />
             )}
           </div>
+
+          {/* Desktop: Code Explanations Panel */}
+          <CodeExplanations
+            code={code}
+            isOpen={showExplanations}
+            onClose={() => setShowExplanations(false)}
+            onHighlightLine={highlightLine}
+          />
 
           {/* Desktop: Tutor Chat */}
           {showChat && (
