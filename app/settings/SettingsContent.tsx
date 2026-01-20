@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { SettingsSection, SettingsItem } from '@/components/settings/SettingsSection';
 import { DeleteAccountModal } from '@/components/settings/DeleteAccountModal';
+import { ExportDataButton } from '@/components/settings/ExportDataButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -342,6 +343,51 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
               View Referrals
             </Button>
           </Link>
+        </div>
+      </SettingsSection>
+
+      {/* Your Data Section */}
+      <SettingsSection
+        title="Your Data"
+        description="Download or manage your personal data"
+        icon={
+          <svg
+            className="w-5 h-5 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+            />
+          </svg>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Export My Data</p>
+              <p className="text-xs text-muted-foreground">
+                Download a ZIP file containing all your data
+              </p>
+            </div>
+            <ExportDataButton />
+          </div>
+          <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-2">
+            <p className="font-medium text-foreground">What&apos;s included:</p>
+            <ul className="list-disc list-inside space-y-1 ml-1">
+              <li>Profile information</li>
+              <li>All projects and source code files</li>
+              <li>Learning progress and completed lessons</li>
+              <li>Achievements earned</li>
+              <li>AI tutor conversations</li>
+              <li>Bookmarks, notifications, and activities</li>
+              <li>Account settings and preferences</li>
+            </ul>
+          </div>
         </div>
       </SettingsSection>
 
