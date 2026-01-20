@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Home,
   Shield,
+  BarChart3,
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +16,11 @@ const navItems = [
     href: '/admin',
     label: 'Overview',
     icon: LayoutDashboard,
+  },
+  {
+    href: '/admin/analytics',
+    label: 'Analytics',
+    icon: BarChart3,
   },
   {
     href: '/admin/users',
