@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LeagueBadge } from '@/components/leaderboard/LeagueBadge';
 import { SocialVerificationList } from '@/components/verification/SocialVerifyButton';
 import { VerificationBadges } from '@/components/verification/VerificationBadges';
+import { MentorBadge } from '@/components/mentors/MentorBadge';
 import { cn, formatDate } from '@/lib/utils';
 
 interface ProfileStats {
@@ -71,7 +72,10 @@ export function ProfileCard({
               </h2>
               {pointsRank && <LeagueBadge rank={pointsRank} size="sm" />}
             </div>
-            <VerificationBadges userId={userId} size="sm" maxBadges={4} className="mt-1" />
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <VerificationBadges userId={userId} size="sm" maxBadges={4} />
+              <MentorBadge userId={userId} size="sm" />
+            </div>
             {isOwnProfile && email && (
               <p className="text-sm text-muted-foreground truncate">{email}</p>
             )}
