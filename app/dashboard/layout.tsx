@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { StreakDisplay } from '@/components/gamification/StreakDisplay';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserAvatarDropdown } from '@/components/profile/UserAvatarDropdown';
 
 export default async function DashboardLayout({
@@ -56,6 +57,7 @@ export default async function DashboardLayout({
           </div>
           <div className="flex items-center gap-4">
             <StreakDisplay />
+            <NotificationBell />
             <UserAvatarDropdown 
               displayName={profile?.display_name} 
               email={user.email} 
