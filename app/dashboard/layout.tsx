@@ -40,6 +40,12 @@ export default async function DashboardLayout({
             >
               Projects
             </Link>
+            <Link
+              href="/showcase"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Showcase
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <StreakDisplay />
