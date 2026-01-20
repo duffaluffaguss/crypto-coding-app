@@ -39,3 +39,8 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Hardhat
+/cache/
+/artifacts/
+/typechain-types/
