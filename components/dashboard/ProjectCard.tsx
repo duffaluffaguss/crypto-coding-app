@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { DeleteProjectButton } from './DeleteProjectButton';
 import CloneButton from '@/components/project/CloneButton';
+import type { ProjectCollaborator } from '@/types';
 
 interface ProjectCardProps {
   project: {
@@ -15,6 +18,8 @@ interface ProjectCardProps {
     description: string | null;
     contract_address: string | null;
     deployments_count?: number;
+    collaborators?: ProjectCollaborator[];
+    user_role?: 'owner' | 'editor' | 'viewer';
   };
 }
 
@@ -61,6 +66,39 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <p className="text-sm text-muted-foreground line-clamp-2">
               {project.description}
             </p>
+
+            {/* Collaborators Section */}
+            {project.collaborators && project.collaborators.length > 0 && (
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex items-center -space-x-2">
+                  {project.collaborators.slice(0, 4).map((collaborator, index) => (
+                    <Avatar key={collaborator.id} className="h-6 w-6 border-2 border-background">
+                      <AvatarImage 
+                        src={collaborator.user_profile?.avatar_url || undefined} 
+                        alt={collaborator.user_profile?.display_name || 'Collaborator'} 
+                      />
+                      <AvatarFallback className="text-xs">
+                        {(collaborator.user_profile?.display_name || 'U')[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {project.collaborators.length > 4 && (
+                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
+                      +{project.collaborators.length - 4}
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {project.collaborators.length} collaborator{project.collaborators.length !== 1 ? 's' : ''}
+                </div>
+                {project.user_role && project.user_role !== 'owner' && (
+                  <Badge variant="secondary" className="text-xs">
+                    {project.user_role}
+                  </Badge>
+                )}
+              </div>
+            )}
+
             {(project.contract_address || project.deployments_count) && (
               <div className="mt-4 pt-4 border-t border-border space-y-2">
                 {project.contract_address && (

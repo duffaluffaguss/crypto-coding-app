@@ -47,6 +47,9 @@ export interface Project {
   showcase_description?: string | null;
   likes_count?: number;
   comments_count?: number;
+  // Collaboration fields
+  collaborators?: ProjectCollaborator[];
+  user_role?: 'owner' | 'editor' | 'viewer';
 }
 
 export interface ProjectComment {
@@ -353,4 +356,55 @@ export function getReputationColor(level: ReputationLevel): string {
     case 'contributor': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
     case 'newcomer': return 'text-green-500 bg-green-500/10 border-green-500/20';
   }
+}
+
+// Project Collaboration Types
+export type CollaboratorRole = 'owner' | 'editor' | 'viewer';
+
+export interface ProjectCollaborator {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: CollaboratorRole;
+  invited_by: string;
+  invited_at: string;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  user_profile?: Profile;
+  inviter_profile?: Profile;
+  is_pending?: boolean; // accepted_at is null
+}
+
+export interface CollaboratorInvite {
+  project_id: string;
+  user_email?: string;
+  user_id?: string;
+  role: Exclude<CollaboratorRole, 'owner'>;
+}
+
+// Utility functions for collaboration
+export function getRoleColor(role: CollaboratorRole): string {
+  switch (role) {
+    case 'owner': return 'text-yellow-600 bg-yellow-100 border-yellow-200';
+    case 'editor': return 'text-blue-600 bg-blue-100 border-blue-200';
+    case 'viewer': return 'text-gray-600 bg-gray-100 border-gray-200';
+  }
+}
+
+export function getRoleDisplayName(role: CollaboratorRole): string {
+  switch (role) {
+    case 'owner': return 'Owner';
+    case 'editor': return 'Editor';
+    case 'viewer': return 'Viewer';
+  }
+}
+
+export function canUserEditProject(userRole?: CollaboratorRole): boolean {
+  return userRole === 'owner' || userRole === 'editor';
+}
+
+export function canUserManageCollaborators(userRole?: CollaboratorRole): boolean {
+  return userRole === 'owner';
 }

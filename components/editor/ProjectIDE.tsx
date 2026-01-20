@@ -17,6 +17,8 @@ import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
 import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
 import { DeploymentHistory } from '@/components/deployments';
 import { SubmitTemplateModal } from '@/components/templates/SubmitTemplateModal';
+import { InviteCollaboratorModal } from '@/components/project/InviteCollaboratorModal';
+import { CollaboratorsList } from '@/components/project/CollaboratorsList';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
@@ -62,6 +64,9 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [versionCount, setVersionCount] = useState<number>(0);
   const [showSubmitTemplate, setShowSubmitTemplate] = useState(false);
+  const [showCollaborators, setShowCollaborators] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [collaboratorsRefresh, setCollaboratorsRefresh] = useState(0);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const editorRef = useRef<any>(null);
   const supabase = createClient();
@@ -645,6 +650,15 @@ contract ${contractName} {
               )}
             </Button>
             <Button 
+              variant={showCollaborators ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setShowCollaborators(!showCollaborators)} 
+              className="text-xs px-2"
+              title="Collaborators"
+            >
+              👥
+            </Button>
+            <Button 
               variant={showExplanations ? 'default' : 'ghost'} 
               size="sm" 
               onClick={() => setShowExplanations(!showExplanations)} 
@@ -767,6 +781,17 @@ contract ${contractName} {
                   {versionCount > 99 ? '99+' : versionCount}
                 </span>
               )}
+            </Button>
+            <Button 
+              variant={showCollaborators ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setShowCollaborators(!showCollaborators)}
+              title="Manage project collaborators"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Collaborators
             </Button>
             <Button 
               variant={showExplanations ? 'default' : 'outline'} 
@@ -1100,6 +1125,53 @@ contract ${contractName} {
           }}
         />
       )}
+
+      {/* Collaborators Panel */}
+      {showCollaborators && (
+        <div className="fixed inset-y-0 right-0 w-96 bg-card border-l border-border z-50 flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h3 className="text-lg font-semibold">Project Collaborators</h3>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setShowInviteModal(true)}
+                className="gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Invite
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCollaborators(false)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 p-4 overflow-auto">
+            <CollaboratorsList
+              projectId={project.id}
+              userRole="owner" // TODO: Get actual user role
+              refreshTrigger={collaboratorsRefresh}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Invite Collaborator Modal */}
+      <InviteCollaboratorModal
+        open={showInviteModal}
+        onOpenChange={setShowInviteModal}
+        projectId={project.id}
+        onInviteSent={() => {
+          setCollaboratorsRefresh(prev => prev + 1);
+        }}
+      />
 
       {/* Submit Template Modal */}
       <SubmitTemplateModal
