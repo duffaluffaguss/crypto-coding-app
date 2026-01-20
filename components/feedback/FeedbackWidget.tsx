@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageSquarePlus, X, Send, Bug, Lightbulb, MessageCircle, CheckCircle } from 'lucide-react';
+import { HCaptchaWidget } from '@/components/verification';
+import { verifyCaptcha, isCaptchaEnabled } from '@/lib/captcha';
 
 type FeedbackType = 'bug' | 'feature' | 'general';
 
@@ -41,7 +43,9 @@ export function FeedbackWidget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const pathname = usePathname();
+  const captchaEnabled = isCaptchaEnabled();
 
   // Reset form when closed
   useEffect(() => {
@@ -52,6 +56,7 @@ export function FeedbackWidget() {
           setType('general');
           setMessage('');
           setError(null);
+          setCaptchaToken(null);
         }
       }, 300);
       return () => clearTimeout(timer);
@@ -66,6 +71,7 @@ export function FeedbackWidget() {
         setIsOpen(false);
         setType('general');
         setMessage('');
+        setCaptchaToken(null);
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -77,6 +83,21 @@ export function FeedbackWidget() {
     if (!message.trim()) {
       setError('Please enter a message');
       return;
+    }
+
+    // Verify CAPTCHA if enabled
+    if (captchaEnabled) {
+      if (!captchaToken) {
+        setError('Please complete the CAPTCHA verification');
+        return;
+      }
+
+      const captchaResult = await verifyCaptcha(captchaToken);
+      if (!captchaResult.success) {
+        setError(captchaResult.error || 'CAPTCHA verification failed');
+        setCaptchaToken(null); // Reset captcha
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -184,6 +205,34 @@ export function FeedbackWidget() {
               </div>
             </div>
 
+            {/* CAPTCHA verification */}
+            {captchaEnabled && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">
+                  Security Verification
+                </label>
+                <div className="flex justify-center">
+                  <HCaptchaWidget
+                    onVerify={(token) => {
+                      setCaptchaToken(token);
+                      setError(null);
+                    }}
+                    onError={(error) => {
+                      console.error('CAPTCHA error:', error);
+                      setCaptchaToken(null);
+                      setError('CAPTCHA verification failed. Please try again.');
+                    }}
+                    onExpire={() => {
+                      setCaptchaToken(null);
+                      setError('CAPTCHA expired. Please verify again.');
+                    }}
+                    size="compact"
+                    className="scale-90"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Error */}
             {error && (
               <div className="text-sm text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
@@ -194,7 +243,7 @@ export function FeedbackWidget() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={isSubmitting || !message.trim()}
+              disabled={isSubmitting || !message.trim() || (captchaEnabled && !captchaToken)}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
             >
               {isSubmitting ? (

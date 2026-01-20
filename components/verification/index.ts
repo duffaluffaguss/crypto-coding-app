@@ -8,3 +8,4 @@ export {
   type UserVerification 
 } from './VerificationBadges';
 export { VerificationStatus, VerificationStatusCompact } from './VerificationStatus';
+export { HCaptchaWidget } from './HCaptcha';

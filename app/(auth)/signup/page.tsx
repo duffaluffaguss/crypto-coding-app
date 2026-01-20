@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { HCaptchaWidget } from '@/components/verification';
+import { verifyCaptcha, isCaptchaEnabled } from '@/lib/captcha';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -19,6 +21,8 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaEnabled = isCaptchaEnabled();
 
   // Get referral code from URL param on mount
   useEffect(() => {
@@ -57,6 +61,23 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    // Verify CAPTCHA if enabled
+    if (captchaEnabled) {
+      if (!captchaToken) {
+        setError('Please complete the CAPTCHA verification');
+        setLoading(false);
+        return;
+      }
+
+      const captchaResult = await verifyCaptcha(captchaToken);
+      if (!captchaResult.success) {
+        setError(captchaResult.error || 'CAPTCHA verification failed');
+        setLoading(false);
+        setCaptchaToken(null); // Reset captcha
+        return;
+      }
+    }
 
     const supabase = createClient();
 
@@ -155,9 +176,36 @@ export default function SignupPage() {
                 </p>
               )}
             </div>
+            
+            {/* CAPTCHA verification */}
+            {captchaEnabled && (
+              <div className="space-y-2">
+                <Label>Security Verification</Label>
+                <HCaptchaWidget
+                  onVerify={(token) => {
+                    setCaptchaToken(token);
+                    setError(null);
+                  }}
+                  onError={(error) => {
+                    console.error('CAPTCHA error:', error);
+                    setCaptchaToken(null);
+                    setError('CAPTCHA verification failed. Please try again.');
+                  }}
+                  onExpire={() => {
+                    setCaptchaToken(null);
+                    setError('CAPTCHA expired. Please verify again.');
+                  }}
+                  className="flex justify-center"
+                />
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading || googleLoading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={loading || googleLoading || (captchaEnabled && !captchaToken)}
+            >
               {loading ? 'Creating account...' : 'Create account'}
             </Button>
             

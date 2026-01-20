@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, Plus, Trash2, Eye, Code, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import Editor from '@monaco-editor/react';
+import { HCaptchaWidget } from '@/components/verification';
+import { verifyCaptcha, isCaptchaEnabled } from '@/lib/captcha';
 
 interface TestCase {
   id: string;
@@ -41,6 +43,8 @@ export function ChallengeForm({ userId }: ChallengeFormProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaEnabled = isCaptchaEnabled();
 
   // Form state
   const [title, setTitle] = useState('');
@@ -107,6 +111,23 @@ contract YourContract {
       setError('Add at least one test case with description and expected output');
       setIsSubmitting(false);
       return;
+    }
+
+    // Verify CAPTCHA if enabled
+    if (captchaEnabled) {
+      if (!captchaToken) {
+        setError('Please complete the CAPTCHA verification');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const captchaResult = await verifyCaptcha(captchaToken);
+      if (!captchaResult.success) {
+        setError(captchaResult.error || 'CAPTCHA verification failed');
+        setIsSubmitting(false);
+        setCaptchaToken(null); // Reset captcha
+        return;
+      }
     }
 
     try {
@@ -461,13 +482,42 @@ contract YourContract {
         </CardContent>
       </Card>
 
+      {/* CAPTCHA verification */}
+      {captchaEnabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Security Verification</CardTitle>
+            <CardDescription>
+              Please complete the CAPTCHA to verify you're not a robot
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <HCaptchaWidget
+              onVerify={(token) => {
+                setCaptchaToken(token);
+                setError(null);
+              }}
+              onError={(error) => {
+                console.error('CAPTCHA error:', error);
+                setCaptchaToken(null);
+                setError('CAPTCHA verification failed. Please try again.');
+              }}
+              onExpire={() => {
+                setCaptchaToken(null);
+                setError('CAPTCHA expired. Please verify again.');
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Actions */}
       <div className="flex gap-4">
         <Button type="button" variant="outline" onClick={() => setShowPreview(true)} className="flex-1">
           <Eye className="w-4 h-4 mr-2" />
           Preview
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="flex-1">
+        <Button type="submit" disabled={isSubmitting || (captchaEnabled && !captchaToken)} className="flex-1">
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
