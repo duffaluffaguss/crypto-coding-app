@@ -11,6 +11,7 @@ import { FrontendGenerator } from '@/components/wallet/FrontendGenerator';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ExportButton } from '@/components/editor/ExportButton';
 import { CodeExplanations } from '@/components/editor/CodeExplanations';
+import { CodeReview } from '@/components/editor/CodeReview';
 import { VersionHistory, saveCodeVersion } from '@/components/editor/VersionHistory';
 import { ShareToShowcase } from '@/components/showcase/ShareToShowcase';
 import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
@@ -57,6 +58,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [formatting, setFormatting] = useState(false);
   const [isProjectPublic, setIsProjectPublic] = useState(project.is_public || false);
   const [showExplanations, setShowExplanations] = useState(false);
+  const [showCodeReview, setShowCodeReview] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [versionCount, setVersionCount] = useState<number>(0);
   const [showSubmitTemplate, setShowSubmitTemplate] = useState(false);
@@ -651,6 +653,15 @@ contract ${contractName} {
             >
               💡
             </Button>
+            <Button 
+              variant={showCodeReview ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setShowCodeReview(!showCodeReview)} 
+              className="text-xs px-2"
+              title="Review Code"
+            >
+              ✓
+            </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} className="text-xs px-2">
               {compiling ? '...' : 'Compile'}
             </Button>
@@ -768,6 +779,17 @@ contract ${contractName} {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
               Explain
+            </Button>
+            <Button 
+              variant={showCodeReview ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setShowCodeReview(!showCodeReview)}
+              title="AI-powered security and best practices review"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Review
             </Button>
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} data-tour="compile">
               {compiling ? (
@@ -1003,6 +1025,18 @@ contract ${contractName} {
             onClose={() => setShowExplanations(false)}
             onHighlightLine={highlightLine}
           />
+
+          {/* Desktop: Code Review Panel */}
+          {showCodeReview && (
+            <div className="hidden lg:block w-[480px] border-l border-border">
+              <CodeReview
+                code={code}
+                isOpen={showCodeReview}
+                onClose={() => setShowCodeReview(false)}
+                onHighlightLine={highlightLine}
+              />
+            </div>
+          )}
 
           {/* Desktop: Tutor Chat */}
           {showChat && (
