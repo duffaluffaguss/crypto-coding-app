@@ -7,6 +7,7 @@ import { ThemeCustomizer } from '@/components/settings/ThemeCustomizer';
 import { DeleteAccountModal } from '@/components/settings/DeleteAccountModal';
 import { ExportDataButton } from '@/components/settings/ExportDataButton';
 import { SocialVerifyButton } from '@/components/verification/SocialVerifyButton';
+import { ENSVerifyButton } from '@/components/verification/ENSVerifyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -172,6 +173,12 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
             description="Connect your Discord account to join our community"
           >
             <SocialVerifyButton platform="discord" size="sm" />
+          </SettingsItem>
+          <SettingsItem
+            label="ENS Name"
+            description="Verify ownership of your Ethereum Name Service domain"
+          >
+            <ENSVerifyButton size="sm" />
           </SettingsItem>
         </div>
       </SettingsSection>

@@ -1,4 +1,5 @@
 export { SocialVerifyButton, SocialVerificationList } from './SocialVerifyButton';
+export { ENSVerifyButton } from './ENSVerifyButton';
 export { 
   VerificationBadges, 
   VerificationBadgeInline, 

@@ -6,6 +6,7 @@ import { baseSepolia } from 'wagmi/chains';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { WalletEducation } from '@/components/learn/WalletEducation';
+import { useENS } from '@/lib/hooks/useENS';
 
 export function ConnectButton() {
   const { address, isConnected } = useAccount();
@@ -17,6 +18,7 @@ export function ConnectButton() {
   const [showEducation, setShowEducation] = useState(false);
   const [hasCompletedEducation, setHasCompletedEducation] = useState(true); // Default to true to avoid flash
   const supabase = createClient();
+  const { displayName: ensDisplayName, ensAvatar } = useENS();
 
   const isWrongNetwork = isConnected && chainId !== baseSepolia.id;
 
@@ -92,10 +94,6 @@ export function ConnectButton() {
 
   const handleSwitchNetwork = () => {
     switchChain({ chainId: baseSepolia.id });
-  };
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
   if (!isConnected) {
@@ -195,7 +193,7 @@ export function ConnectButton() {
         className="gap-2"
       >
         <div className="w-2 h-2 rounded-full bg-green-500" />
-        {formatAddress(address!)}
+        {ensDisplayName}
         <svg
           className={`w-3 h-3 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
           fill="none"
