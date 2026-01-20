@@ -106,9 +106,9 @@ export function NFTGallery({
           <EmptyState
             icon="🏆"
             title="No NFT Certificates Yet"
-            description="Complete a project and mint your certificate as an NFT to see it here!"
-            ctaText="Earn Your First NFT"
-            ctaHref="/dashboard"
+            description="Complete a project or learning path and mint your certificate as an NFT to see it here!"
+            ctaText="Start a Learning Path"
+            ctaHref="/paths"
           />
         )}
 

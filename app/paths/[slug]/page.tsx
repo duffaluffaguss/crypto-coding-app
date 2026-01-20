@@ -17,6 +17,7 @@ import {
   Download
 } from 'lucide-react';
 import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
 
 interface PathPageProps {
   params: {
@@ -280,16 +281,26 @@ export default async function PathDetailPage({ params }: PathPageProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           {isCompleted ? (
             <>
-              <Button size="lg" asChild>
-                <Link href={`/certificate?path=${path.slug}`}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Certificate
+              <Button 
+                size="lg" 
+                asChild
+                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+              >
+                <Link href={`/certificates/mint/${path.id}`}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Mint NFT Certificate
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" asChild>
+              <Button size="lg" variant="outline" asChild>
+                <Link href={`/certificate?path=${path.slug}`}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Link>
+              </Button>
+              <Button variant="ghost" size="lg" asChild>
                 <Link href={nextLesson ? `/projects/new?lesson=${nextLesson.id}` : '#'}>
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Review Lessons
