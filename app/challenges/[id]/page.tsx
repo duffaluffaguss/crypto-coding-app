@@ -9,6 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 import { useParams } from 'next/navigation';
+import {
+  calculateBonuses,
+  getWeekBoundaries,
+  type BonusPoints,
+  getTotalBonusPoints,
+} from '@/lib/challenge-bonuses';
 
 // Dynamically import Monaco to avoid SSR issues
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
@@ -36,6 +42,7 @@ interface Completion {
   id: string;
   code_submitted: string;
   points_earned: number;
+  bonus_points: number;
   completed_at: string;
 }
 
@@ -62,6 +69,7 @@ export default function ChallengePage() {
   const [showHint, setShowHint] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [earnedBonuses, setEarnedBonuses] = useState<BonusPoints[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -133,6 +141,57 @@ export default function ChallengePage() {
 
         if (updateError) throw updateError;
       } else {
+        // Calculate challenge streak and bonuses
+        const now = new Date();
+        const { start: weekStart, end: weekEnd } = getWeekBoundaries(now);
+        
+        // Get current week's completions count
+        const { count: weekCompletions } = await supabase
+          .from('challenge_completions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .gte('completed_at', weekStart.toISOString())
+          .lte('completed_at', weekEnd.toISOString());
+        
+        // Get all challenges and completions for streak calculation
+        const { data: allChallenges } = await supabase
+          .from('daily_challenges')
+          .select('id, challenge_date')
+          .lte('challenge_date', challenge.challenge_date)
+          .order('challenge_date', { ascending: false })
+          .limit(100);
+        
+        const { data: userCompletions } = await supabase
+          .from('challenge_completions')
+          .select('challenge_id, daily_challenges!inner(challenge_date)')
+          .eq('user_id', userId);
+        
+        // Calculate new streak
+        const completedDates = new Set(
+          (userCompletions || []).map((c: any) => c.daily_challenges?.challenge_date)
+        );
+        completedDates.add(challenge.challenge_date); // Add current
+        
+        let newStreak = 0;
+        for (const ch of allChallenges || []) {
+          if (completedDates.has(ch.challenge_date)) {
+            newStreak++;
+          } else {
+            break;
+          }
+        }
+        
+        // Calculate bonuses
+        const bonuses = calculateBonuses({
+          completedAt: now,
+          challengeDate: challenge.challenge_date,
+          newStreak,
+          weekCompletions: (weekCompletions || 0) + 1,
+        });
+        
+        const bonusPoints = getTotalBonusPoints(bonuses);
+        const totalPoints = challenge.points + bonusPoints;
+        
         // Create new completion
         const { error: insertError } = await supabase
           .from('challenge_completions')
@@ -141,6 +200,7 @@ export default function ChallengePage() {
             challenge_id: challenge.id,
             code_submitted: code,
             points_earned: challenge.points,
+            bonus_points: bonusPoints,
           });
 
         if (insertError) throw insertError;
@@ -148,8 +208,27 @@ export default function ChallengePage() {
         // Update user's achievement points
         await supabase.rpc('increment_achievement_points', {
           user_uuid: userId,
-          points_to_add: challenge.points,
+          points_to_add: totalPoints,
         });
+        
+        // Update user's challenge streak
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('challenge_streak, longest_challenge_streak')
+          .eq('id', userId)
+          .single();
+        
+        const longestStreak = Math.max(newStreak, profile?.longest_challenge_streak || 0);
+        
+        await supabase
+          .from('profiles')
+          .update({
+            challenge_streak: newStreak,
+            longest_challenge_streak: longestStreak,
+          })
+          .eq('id', userId);
+        
+        setEarnedBonuses(bonuses);
       }
 
       setSubmitSuccess(true);
@@ -305,12 +384,29 @@ export default function ChallengePage() {
                 <p className="text-sm text-red-500">{error}</p>
               )}
               {submitSuccess && !error && (
-                <p className="text-sm text-green-500 flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {completion ? 'Solution updated!' : 'Challenge completed! You earned ' + challenge.points + ' points.'}
-                </p>
+                <div className="text-sm text-green-500">
+                  <p className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {completion ? 'Solution updated!' : `Challenge completed! +${challenge.points} pts`}
+                  </p>
+                  {earnedBonuses.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {earnedBonuses.map((bonus, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 text-xs"
+                        >
+                          {bonus.type === 'early_bird' && '🌅'}
+                          {bonus.type === 'perfect_week' && '🎯'}
+                          {bonus.type === 'streak_milestone' && '🏅'}
+                          +{bonus.points} {bonus.description}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <Button
@@ -376,8 +472,20 @@ export default function ChallengePage() {
               </CardHeader>
               <CardContent className="text-sm space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Points Earned:</span>
+                  <span className="text-muted-foreground">Base Points:</span>
                   <span className="font-semibold">{completion.points_earned}</span>
+                </div>
+                {completion.bonus_points > 0 && (
+                  <div className="flex justify-between text-yellow-600">
+                    <span>Bonus Points:</span>
+                    <span className="font-semibold">+{completion.bonus_points}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t pt-2 mt-2">
+                  <span className="text-muted-foreground">Total:</span>
+                  <span className="font-bold text-primary">
+                    {completion.points_earned + (completion.bonus_points || 0)} pts
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Completed:</span>

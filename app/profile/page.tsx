@@ -90,12 +90,30 @@ export default async function ProfilePage() {
   
   const pointsRank = (pointsRankCount ?? 0) + 1;
 
+  // Fetch challenge completions stats
+  const { data: challengeCompletions } = await supabase
+    .from('challenge_completions')
+    .select('points_earned, bonus_points')
+    .eq('user_id', user.id);
+
+  const challengeStats = {
+    totalCompleted: challengeCompletions?.length || 0,
+    totalPoints: (challengeCompletions || []).reduce(
+      (sum, c) => sum + (c.points_earned || 0) + (c.bonus_points || 0),
+      0
+    ),
+    currentStreak: profile?.challenge_streak || 0,
+    longestStreak: profile?.longest_challenge_streak || 0,
+  };
+
   const stats = {
     projectsCreated: projectsCount || 0,
     lessonsCompleted: lessonsCount || 0,
     currentStreak: profile?.current_streak || 0,
     longestStreak: profile?.longest_streak || 0,
     achievementPoints,
+    challengeStreak: challengeStats.currentStreak,
+    challengePoints: challengeStats.totalPoints,
   };
 
   return (
@@ -274,6 +292,45 @@ export default async function ProfilePage() {
           </Card>
         </div>
 
+        {/* Challenge Stats */}
+        <Card className="mt-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <span>🎯</span>
+                Daily Challenges
+              </CardTitle>
+              <Link href="/challenges" className="text-sm text-primary hover:underline">
+                View Challenges
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-red-500/10 text-center">
+                <div className="text-2xl mb-1">🔥</div>
+                <div className="text-3xl font-bold text-orange-500">{challengeStats.currentStreak}</div>
+                <div className="text-xs text-muted-foreground">Challenge Streak</div>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 text-center">
+                <div className="text-2xl mb-1">⭐</div>
+                <div className="text-3xl font-bold text-primary">{challengeStats.totalPoints}</div>
+                <div className="text-xs text-muted-foreground">Challenge Points</div>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 text-center">
+                <div className="text-2xl mb-1">✅</div>
+                <div className="text-3xl font-bold">{challengeStats.totalCompleted}</div>
+                <div className="text-xs text-muted-foreground">Completed</div>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 text-center">
+                <div className="text-2xl mb-1">🏆</div>
+                <div className="text-3xl font-bold">{challengeStats.longestStreak}</div>
+                <div className="text-xs text-muted-foreground">Best Streak</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Activity Summary */}
         <Card className="mt-8">
           <CardHeader>
@@ -286,14 +343,14 @@ export default async function ProfilePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <ActivityItem
                 icon="🔥"
-                label="Current Streak"
+                label="Learning Streak"
                 value={stats.currentStreak}
                 sublabel={stats.currentStreak === 1 ? 'day' : 'days'}
                 highlight={stats.currentStreak >= 7}
               />
               <ActivityItem
                 icon="⚡"
-                label="Longest Streak"
+                label="Best Streak"
                 value={stats.longestStreak}
                 sublabel={stats.longestStreak === 1 ? 'day' : 'days'}
               />
