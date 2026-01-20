@@ -166,6 +166,14 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     .order('likes_count', { ascending: false })
     .limit(6);
 
+  // Calculate user's points rank for league badge
+  const { count: pointsRankCount } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .gt('achievement_points', achievementPoints);
+  
+  const pointsRank = (pointsRankCount ?? 0) + 1;
+
   const stats = {
     projectsCreated: projectsCount || 0,
     lessonsCompleted: lessonsCount || 0,
@@ -250,6 +258,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           memberSince={profile.created_at}
           stats={stats}
           isOwnProfile={false}
+          pointsRank={pointsRank}
         />
 
         <div className="grid lg:grid-cols-2 gap-8 mt-8">

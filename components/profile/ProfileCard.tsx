@@ -2,6 +2,7 @@
 
 import { UserAvatar } from './UserAvatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { LeagueBadge } from '@/components/leaderboard/LeagueBadge';
 import { cn, formatDate } from '@/lib/utils';
 
 interface ProfileStats {
@@ -28,6 +29,7 @@ interface ProfileCardProps {
   stats: ProfileStats;
   isOwnProfile?: boolean;
   className?: string;
+  pointsRank?: number | null;
 }
 
 export function ProfileCard({
@@ -40,6 +42,7 @@ export function ProfileCard({
   stats,
   isOwnProfile = false,
   className,
+  pointsRank,
 }: ProfileCardProps) {
   const hasSocialLinks = socialLinks?.websiteUrl || socialLinks?.twitterHandle || socialLinks?.githubUsername;
 
@@ -58,9 +61,12 @@ export function ProfileCard({
             className="ring-4 ring-background"
           />
           <div className="flex-1 min-w-0 pb-2">
-            <h2 className="text-2xl font-bold truncate">
-              {displayName || 'Anonymous'}
-            </h2>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-2xl font-bold truncate">
+                {displayName || 'Anonymous'}
+              </h2>
+              {pointsRank && <LeagueBadge rank={pointsRank} size="sm" />}
+            </div>
             {isOwnProfile && email && (
               <p className="text-sm text-muted-foreground truncate">{email}</p>
             )}
