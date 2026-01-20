@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { ShareableAchievementCard } from './ShareableAchievementCard';
+import { Button } from '@/components/ui/button';
 
 interface AchievementNotification {
   id: string;
@@ -9,6 +11,9 @@ interface AchievementNotification {
   icon: string;
   points: number;
   description?: string;
+  category?: string;
+  userId?: string;
+  displayName?: string;
 }
 
 interface AchievementToastProps {
@@ -107,6 +112,29 @@ export function AchievementToast({
               </span>
             </div>
           </div>
+
+          {/* Share Button */}
+          {achievement.userId && (
+            <div className="mt-3 flex justify-center">
+              <ShareableAchievementCard
+                achievement={{
+                  id: achievement.id,
+                  name: achievement.name,
+                  description: achievement.description || '',
+                  icon: achievement.icon,
+                  category: achievement.category || 'general',
+                  points: achievement.points,
+                }}
+                userId={achievement.userId}
+                displayName={achievement.displayName}
+              >
+                <Button size="sm" variant="outline" className="gap-2 text-xs">
+                  <span>📤</span>
+                  Share Achievement
+                </Button>
+              </ShareableAchievementCard>
+            </div>
+          )}
 
           {/* Progress bar */}
           <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">

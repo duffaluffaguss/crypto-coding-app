@@ -8,6 +8,7 @@ import { ProjectCard } from '@/components/dashboard/ProjectCard';
 import { ConnectButton } from '@/components/wallet/ConnectButton';
 import { AchievementsSection } from '@/components/achievements';
 import { WhatsNewBadge } from '@/components/changelog/WhatsNewBadge';
+import { ShareProgressModal } from '@/components/share/ShareProgressModal';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -28,6 +29,40 @@ export default async function DashboardPage() {
     deployments_count: project.deployments?.[0]?.count || 0
   })) || [];
 
+  // Fetch user stats for sharing
+  const [
+    { data: profile },
+    { count: lessonsCount },
+    { data: userAchievements },
+    { data: challengeCompletions }
+  ] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user!.id).single(),
+    supabase.from('learning_progress')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user!.id)
+      .eq('status', 'completed'),
+    supabase.from('user_achievements')
+      .select('*, achievements(*)')
+      .eq('user_id', user!.id),
+    supabase.from('challenge_completions')
+      .select('points_earned, bonus_points')
+      .eq('user_id', user!.id)
+  ]);
+
+  // Calculate user stats
+  const achievementPoints = userAchievements?.reduce((total, ua) => {
+    return total + ((ua.achievements as any)?.points || 0);
+  }, 0) || 0;
+
+  const userStats = {
+    lessonsCompleted: lessonsCount || 0,
+    currentStreak: profile?.current_streak || 0,
+    achievementPoints,
+    projectsCreated: projectsWithCounts.length,
+    challengesCompleted: challengeCompletions?.length || 0,
+    longestStreak: profile?.longest_streak || 0,
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -39,6 +74,16 @@ export default async function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           <WhatsNewBadge />
+          <ShareProgressModal
+            userId={user!.id}
+            userStats={userStats}
+            displayName={profile?.display_name}
+          >
+            <Button variant="outline" size="sm" className="gap-2">
+              <span>📤</span>
+              Share Progress
+            </Button>
+          </ShareProgressModal>
           <ConnectButton />
           <LearnModal />
           <Link href="/bookmarks" title="My Bookmarks">

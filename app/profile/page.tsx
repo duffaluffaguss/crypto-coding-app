@@ -8,6 +8,7 @@ import { AchievementGrid, type Achievement, type UserAchievement } from '@/compo
 import { NFTGallerySection } from './NFTGallerySection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ShareProgressModal } from '@/components/share/ShareProgressModal';
 import type { Project, ProjectType } from '@/types';
 
 const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
@@ -185,7 +186,24 @@ export default async function ProfilePage() {
             isOwnProfile={true}
             pointsRank={pointsRank}
           />
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <ShareProgressModal
+              userId={user.id}
+              userStats={{
+                lessonsCompleted: stats.lessonsCompleted,
+                currentStreak: stats.currentStreak,
+                achievementPoints: stats.achievementPoints,
+                projectsCreated: stats.projectsCreated,
+                challengesCompleted: challengeStats.totalCompleted,
+                longestStreak: stats.longestStreak,
+              }}
+              displayName={profile?.display_name}
+            >
+              <Button variant="outline" size="sm" className="gap-2">
+                <span>📤</span>
+                Share
+              </Button>
+            </ShareProgressModal>
             <EditProfileModal
               currentDisplayName={profile?.display_name}
               currentBio={profile?.bio}
