@@ -42,6 +42,12 @@ export default async function LeaderboardLayout({
               Projects
             </Link>
             <Link
+              href="/templates"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Templates
+            </Link>
+            <Link
               href="/showcase"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
