@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logAchievementEarned } from '@/lib/activity';
 
 // Achievement condition checking logic
 interface CheckResult {
@@ -236,6 +237,15 @@ export async function POST(request: NextRequest) {
             points: achievement.points,
             description: achievement.description,
           });
+
+          // Log activity for achievement earned
+          await logAchievementEarned(
+            supabase,
+            user.id,
+            achievement.name,
+            achievement.icon,
+            achievement.points
+          );
         }
       }
     }

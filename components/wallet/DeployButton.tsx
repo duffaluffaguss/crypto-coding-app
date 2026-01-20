@@ -5,6 +5,7 @@ import { useAccount, usePublicClient, useWalletClient, useSwitchChain } from 'wa
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { NETWORKS, DEFAULT_NETWORK, getTxExplorerUrl, type NetworkId } from '@/lib/networks';
+import { logContractDeployed } from '@/lib/activity';
 import type { CompilationResult } from '@/types';
 
 interface DeployButtonProps {
@@ -152,6 +153,9 @@ export function DeployButton({
 
   const saveDeployment = async (contractAddress: string, transactionHash: string, abi: any[]) => {
     try {
+      // Get user for activity logging
+      const { data: { user } } = await supabase.auth.getUser();
+
       await supabase
         .from('projects')
         .update({
@@ -162,6 +166,17 @@ export function DeployButton({
           contract_abi: abi,
         })
         .eq('id', projectId);
+
+      // Log activity
+      if (user) {
+        await logContractDeployed(
+          supabase,
+          user.id,
+          contractAddress,
+          contractName,
+          networkConfig.name
+        );
+      }
     } catch (err) {
       console.error('Failed to save deployment:', err);
     }

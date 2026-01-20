@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import { logLessonCompleted } from '@/lib/activity';
 import { VerificationModal, VerificationErrorModal } from './VerificationModal';
 import type { Lesson, LearningProgress } from '@/types';
 
@@ -144,6 +145,14 @@ export function LessonSidebar({
           }
         }
       }
+
+      // Log activity for lesson completion
+      await logLessonCompleted(
+        supabase,
+        user.id,
+        currentLesson.id,
+        currentLesson.title
+      );
     } catch (error) {
       console.error('Failed to update progress:', error);
     } finally {

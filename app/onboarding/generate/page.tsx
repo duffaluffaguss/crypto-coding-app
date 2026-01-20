@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
+import { logProjectCreated } from '@/lib/activity';
 import { INTERESTS, type GeneratedProject, type ExperienceLevel } from '@/types';
 
 export default function GeneratePage() {
@@ -100,6 +101,9 @@ export default function GeneratePage() {
         .single();
 
       if (projectError) throw projectError;
+
+      // Log activity for project creation
+      await logProjectCreated(supabase, user.id, newProject.id, project.name);
 
       // Redirect to the project IDE
       router.push(`/projects/${newProject.id}`);

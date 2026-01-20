@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import { logJoinedShowcase } from '@/lib/activity';
 
 interface ShareToShowcaseProps {
   projectId: string;
+  projectName?: string;
   initialIsPublic: boolean;
   initialDescription?: string;
   onUpdate?: (isPublic: boolean) => void;
@@ -13,6 +15,7 @@ interface ShareToShowcaseProps {
 
 export function ShareToShowcase({
   projectId,
+  projectName = 'Project',
   initialIsPublic,
   initialDescription,
   onUpdate,
@@ -58,6 +61,8 @@ export function ShareToShowcase({
     setLoading(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from('projects')
         .update({
@@ -70,6 +75,11 @@ export function ShareToShowcase({
         setIsPublic(true);
         setShowForm(false);
         onUpdate?.(true);
+
+        // Log activity
+        if (user) {
+          await logJoinedShowcase(supabase, user.id, projectId, projectName);
+        }
       }
     } catch (error) {
       console.error('Error sharing to showcase:', error);
