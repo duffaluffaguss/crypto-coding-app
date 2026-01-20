@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ProjectCard } from '@/components/dashboard/ProjectCard';
 import { ConnectButton } from '@/components/wallet/ConnectButton';
 import { AchievementsSection } from '@/components/achievements';
+import { WhatsNewBadge } from '@/components/changelog/WhatsNewBadge';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <WhatsNewBadge />
           <ConnectButton />
           <LearnModal />
           <Link href="/help" title="Help & FAQ">

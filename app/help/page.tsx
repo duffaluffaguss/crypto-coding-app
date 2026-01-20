@@ -344,6 +344,7 @@ export default function HelpPage() {
             <Link href="/leaderboard" className="hover:text-primary transition-colors">Leaderboard</Link>
             <Link href="/showcase" className="hover:text-primary transition-colors">Showcase</Link>
             <Link href="/help" className="hover:text-primary transition-colors font-medium text-primary">Help</Link>
+            <Link href="/changelog" className="hover:text-primary transition-colors">Changelog</Link>
           </div>
           <p>© 2026 Zero to Crypto Dev. All rights reserved.</p>
         </div>

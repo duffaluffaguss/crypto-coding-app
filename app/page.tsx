@@ -322,6 +322,7 @@ export default function Home() {
             <Link href="/leaderboard" className="hover:text-primary transition-colors">Leaderboard</Link>
             <Link href="/showcase" className="hover:text-primary transition-colors">Showcase</Link>
             <Link href="/help" className="hover:text-primary transition-colors">Help & FAQ</Link>
+            <Link href="/changelog" className="hover:text-primary transition-colors">Changelog</Link>
           </div>
           <p>Built for the next generation of Web3 builders</p>
           <p className="mt-2">© 2026 Zero to Crypto Dev. All rights reserved.</p>
