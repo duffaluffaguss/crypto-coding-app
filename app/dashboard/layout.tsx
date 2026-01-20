@@ -51,6 +51,12 @@ export default async function DashboardLayout({
               Projects
             </Link>
             <Link
+              href="/paths"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Learning Paths
+            </Link>
+            <Link
               href="/templates"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
