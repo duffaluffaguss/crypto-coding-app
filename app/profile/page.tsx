@@ -5,6 +5,7 @@ import { ProfileCard } from '@/components/profile/ProfileCard';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
 import { RestartTourButton } from '@/components/tour/RestartTourButton';
 import { AchievementGrid, type Achievement, type UserAchievement } from '@/components/achievements/AchievementBadge';
+import { NFTGallerySection } from './NFTGallerySection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Project, ProjectType } from '@/types';
@@ -290,6 +291,11 @@ export default async function ProfilePage() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* NFT Certificates Gallery */}
+        <div className="mt-8">
+          <NFTGallerySection />
         </div>
 
         {/* Challenge Stats */}
