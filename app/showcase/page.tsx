@@ -19,6 +19,19 @@ interface ShowcaseProject {
   } | null;
 }
 
+// Type for the query result
+type ProjectWithProfile = {
+  id: string;
+  name: string;
+  project_type: string;
+  showcase_description: string | null;
+  description: string;
+  likes_count: number;
+  created_at: string;
+  contract_address: string | null;
+  profiles: { display_name: string | null } | null;
+};
+
 const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
   nft_marketplace: 'NFT',
   token: 'Token',
@@ -147,7 +160,7 @@ export default async function ShowcasePage({
                           {project.name}
                         </CardTitle>
                         <CardDescription className="mt-1">
-                          by {project.profiles?.display_name || 'Anonymous'}
+                          by {(project.profiles as any)?.display_name || 'Anonymous'}
                         </CardDescription>
                       </div>
                       <span
