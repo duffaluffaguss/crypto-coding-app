@@ -9,6 +9,7 @@ import { ConnectButton } from '@/components/wallet/ConnectButton';
 import { AchievementsSection } from '@/components/achievements';
 import { WhatsNewBadge } from '@/components/changelog/WhatsNewBadge';
 import { ShareProgressModal } from '@/components/share/ShareProgressModal';
+import ImportButton from '@/components/project/ImportButton';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -123,6 +124,7 @@ export default async function DashboardPage() {
             </Button>
           </Link>
           <ThemeToggle />
+          <ImportButton />
           <Link href="/onboarding/interests">
             <Button>
               <svg
@@ -174,6 +176,7 @@ export default async function DashboardPage() {
             </p>
             <div className="flex items-center justify-center gap-3">
               <LearnModal triggerClassName="gap-2" />
+              <ImportButton variant="outline" />
               <Link href="/onboarding/interests">
                 <Button>Create Your First Project</Button>
               </Link>
