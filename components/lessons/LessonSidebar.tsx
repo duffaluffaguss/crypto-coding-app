@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { logLessonCompleted } from '@/lib/activity';
 import { VerificationModal, VerificationErrorModal } from './VerificationModal';
 import { LessonHelpStats } from './LessonHelpButton';
+import { LessonVideoSection } from './LessonVideoSection';
 import type { Lesson, LearningProgress } from '@/types';
 
 interface LessonSidebarProps {
@@ -363,6 +364,16 @@ export function LessonSidebar({
           )}
         </div>
       </div>
+
+      {/* Related Videos Section */}
+      {currentLesson && (
+        <div className="px-3">
+          <LessonVideoSection 
+            lessonTitle={currentLesson.title}
+            lessonOrder={lessons.findIndex(l => l.id === currentLesson.id) + 1}
+          />
+        </div>
+      )}
 
       {/* Current Lesson Goal + Complete Button */}
       {currentLesson && (

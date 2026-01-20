@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { TutorialCard } from '@/components/tutorials/TutorialCard';
 import { tutorials, categoryLabels, TutorialCategory } from '@/lib/tutorials';
@@ -10,6 +10,7 @@ const categories: (TutorialCategory | 'all')[] = ['all', 'getting-started', 'sol
 
 export default function TutorialsPage() {
   const [selectedCategory, setSelectedCategory] = useState<TutorialCategory | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [watchedTutorials, setWatchedTutorials] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('watchedTutorials');
@@ -18,9 +19,27 @@ export default function TutorialsPage() {
     return [];
   });
 
-  const filteredTutorials = selectedCategory === 'all'
-    ? tutorials
-    : tutorials.filter((t) => t.category === selectedCategory);
+  const filteredTutorials = useMemo(() => {
+    let result = tutorials;
+    
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      result = result.filter((t) => t.category === selectedCategory);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((t) => 
+        t.title.toLowerCase().includes(query) ||
+        t.description.toLowerCase().includes(query) ||
+        t.category.toLowerCase().includes(query) ||
+        t.difficulty.toLowerCase().includes(query)
+      );
+    }
+    
+    return result;
+  }, [selectedCategory, searchQuery]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-secondary">
@@ -85,6 +104,43 @@ export default function TutorialsPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="max-w-xl mx-auto mb-8">
+          <div className="relative">
+            <svg 
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search tutorials by title, topic, or difficulty..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-full transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-2 text-center">
+              Found {filteredTutorials.length} tutorial{filteredTutorials.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </p>
+          )}
         </div>
 
         {/* Category Filter */}
