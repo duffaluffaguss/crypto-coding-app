@@ -2,6 +2,7 @@ import Link from 'next/link';
 import FeatureCard from '@/components/landing/FeatureCard';
 import TestimonialCard from '@/components/landing/TestimonialCard';
 import StatsSection from '@/components/landing/StatsSection';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 // Feature icons as components
 const icons = {
@@ -106,7 +107,8 @@ export default function Home() {
           <div className="text-xl md:text-2xl font-bold text-primary">
             Zero to Crypto Dev
           </div>
-          <div className="flex gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <ThemeToggle />
             <Link
               href="/login"
               className="px-3 md:px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
