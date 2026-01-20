@@ -320,6 +320,30 @@ export default function HelpPage() {
             </div>
           </section>
 
+          {/* Video Tutorials CTA */}
+          <section className="bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl p-6 border border-primary/20">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="text-center sm:text-left flex-1">
+                <h3 className="font-semibold text-lg">Learn with Video Tutorials</h3>
+                <p className="text-muted-foreground text-sm">
+                  Watch curated video tutorials covering Solidity basics, smart contract deployment, and advanced patterns.
+                </p>
+              </div>
+              <Link
+                href="/tutorials"
+                className="px-6 py-2.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all whitespace-nowrap"
+              >
+                Browse Tutorials
+              </Link>
+            </div>
+          </section>
+
           {/* Back to Dashboard CTA */}
           <div className="text-center pt-8">
             <Link
@@ -343,6 +367,7 @@ export default function HelpPage() {
             <Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link>
             <Link href="/leaderboard" className="hover:text-primary transition-colors">Leaderboard</Link>
             <Link href="/showcase" className="hover:text-primary transition-colors">Showcase</Link>
+            <Link href="/tutorials" className="hover:text-primary transition-colors">Tutorials</Link>
             <Link href="/help" className="hover:text-primary transition-colors font-medium text-primary">Help</Link>
             <Link href="/changelog" className="hover:text-primary transition-colors">Changelog</Link>
           </div>
