@@ -80,6 +80,12 @@ export default async function DashboardLayout({
             >
               Community
             </Link>
+            <Link
+              href="/builders"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Builder Directory
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <GlobalSearch />

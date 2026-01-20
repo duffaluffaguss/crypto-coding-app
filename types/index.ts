@@ -25,6 +25,9 @@ export interface Profile {
   twitter_handle: string | null;
   github_username: string | null;
   avatar_url: string | null;
+  // Builder directory fields
+  looking_for_collaborators: boolean;
+  skills: string[];
 }
 
 export interface Project {
@@ -198,4 +201,94 @@ export interface Deployment {
   // Joined fields
   project_name?: string;
   project_type?: ProjectType;
+}
+
+// Builder Directory Types
+export interface BuilderProfile extends Profile {
+  // Computed fields from queries
+  projects_count?: number;
+  followers_count?: number;
+  following_count?: number;
+  reputation_score?: number;
+  recent_activity?: string; // ISO date string of last activity
+  is_looking_for_collaborators?: boolean;
+  skills?: string[];
+  
+  // Following relationship for current user
+  is_following?: boolean;
+  is_follower?: boolean;
+}
+
+export type ReputationLevel = 'newcomer' | 'contributor' | 'veteran' | 'expert';
+
+export interface BuilderFilters {
+  search?: string;
+  interests?: string[];
+  skills?: string[];
+  reputation_min?: number;
+  reputation_max?: number;
+  experience_level?: ExperienceLevel[];
+  looking_for_collaborators?: boolean;
+  has_projects?: boolean;
+}
+
+export interface BuilderSortOption {
+  value: 'reputation' | 'recent_activity' | 'projects_count' | 'followers_count' | 'created_at';
+  label: string;
+  direction: 'asc' | 'desc';
+}
+
+export const BUILDER_SORT_OPTIONS: BuilderSortOption[] = [
+  { value: 'reputation', label: 'Reputation', direction: 'desc' },
+  { value: 'recent_activity', label: 'Recent Activity', direction: 'desc' },
+  { value: 'projects_count', label: 'Most Projects', direction: 'desc' },
+  { value: 'followers_count', label: 'Most Followers', direction: 'desc' },
+  { value: 'created_at', label: 'Newest Members', direction: 'desc' },
+] as const;
+
+export const SKILL_OPTIONS = [
+  'Solidity',
+  'React',
+  'TypeScript',
+  'JavaScript',
+  'Node.js',
+  'Python',
+  'Rust',
+  'Go',
+  'Web3.js',
+  'Ethers.js',
+  'Hardhat',
+  'Foundry',
+  'Smart Contracts',
+  'DeFi',
+  'NFTs',
+  'DAOs',
+  'Frontend',
+  'Backend',
+  'Full Stack',
+  'UI/UX Design',
+  'DevOps',
+  'Security',
+  'Testing',
+  'Documentation',
+] as const;
+
+export type SkillOption = typeof SKILL_OPTIONS[number];
+
+// Utility function to calculate reputation level
+export function getReputationLevel(score: number): ReputationLevel {
+  if (score >= 1000) return 'expert';
+  if (score >= 500) return 'veteran';
+  if (score >= 100) return 'contributor';
+  return 'newcomer';
+}
+
+// Utility function to get reputation badge color
+export function getReputationColor(level: ReputationLevel): string {
+  switch (level) {
+    case 'expert': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+    case 'veteran': return 'text-purple-500 bg-purple-500/10 border-purple-500/20';
+    case 'contributor': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
+    case 'newcomer': return 'text-green-500 bg-green-500/10 border-green-500/20';
+  }
 }
