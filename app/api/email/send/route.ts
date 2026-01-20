@@ -5,8 +5,9 @@ import {
   generateWelcomeEmail,
   generateAchievementEmail,
   generateStreakReminderEmail,
-  generateWeeklyDigestEmail,
 } from '@/lib/email';
+import { render } from '@react-email/render';
+import WeeklyDigestEmail from '@/emails/WeeklyDigest';
 
 export type EmailType = 'welcome' | 'achievement' | 'streak-reminder' | 'weekly-digest';
 
@@ -139,7 +140,15 @@ export async function POST(request: NextRequest) {
       }
       case 'weekly-digest': {
         const p = payload as WeeklyDigestPayload;
-        emailContent = generateWeeklyDigestEmail(p.displayName, p.stats);
+        const html = render(WeeklyDigestEmail({
+          displayName: p.displayName,
+          stats: p.stats,
+        }));
+        emailContent = {
+          subject: '📊 Your Weekly CryptoCode Progress',
+          html,
+          text: `Weekly CryptoCode Progress for ${p.displayName}\n\nLessons Completed: ${p.stats.lessonsCompleted}\nPoints Earned: +${p.stats.pointsEarned}\nCurrent Streak: ${p.stats.currentStreak} days\nAchievements: ${p.stats.achievementsUnlocked}\n${p.stats.rank ? `Leaderboard Rank: #${p.stats.rank}` : ''}\n\nContinue learning: https://cryptocode.dev/dashboard`,
+        };
         break;
       }
       default:
