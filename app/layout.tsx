@@ -5,6 +5,7 @@ import { Providers } from '@/components/providers';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -48,6 +49,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <ServiceWorkerRegistration />
         <Providers>{children}</Providers>
+        <FeedbackWidget />
         <Analytics />
         <SpeedInsights />
       </body>
