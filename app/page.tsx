@@ -317,6 +317,12 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border">
         <div className="container mx-auto px-4 py-8 text-center text-muted-foreground text-sm">
+          <div className="flex justify-center gap-6 mb-4">
+            <Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link>
+            <Link href="/leaderboard" className="hover:text-primary transition-colors">Leaderboard</Link>
+            <Link href="/showcase" className="hover:text-primary transition-colors">Showcase</Link>
+            <Link href="/help" className="hover:text-primary transition-colors">Help & FAQ</Link>
+          </div>
           <p>Built for the next generation of Web3 builders</p>
           <p className="mt-2">© 2026 Zero to Crypto Dev. All rights reserved.</p>
         </div>
