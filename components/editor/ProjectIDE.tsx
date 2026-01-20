@@ -14,6 +14,9 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import type { Project, ProjectFile, Lesson, LearningProgress, CompilationResult } from '@/types';
 
+// Mobile tab type
+type MobileTab = 'code' | 'lessons' | 'chat';
+
 // Dynamically import Monaco to avoid SSR issues
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
@@ -43,6 +46,8 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   const [contractAbi, setContractAbi] = useState<any[] | null>(project.contract_abi);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('code');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const supabase = createClient();
 
@@ -365,51 +370,128 @@ contract ${contractName} {
     }
   };
 
-  return (
-    <div className="h-screen flex overflow-hidden">
-      {/* File Explorer & Lessons */}
-      <div className="w-80 border-r border-border bg-card flex flex-col overflow-hidden">
-        {/* File Explorer */}
-        <div className="p-3 border-b border-border">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Files
-          </h3>
-          <div className="space-y-1">
-            {files.map((file) => (
-              <button
-                key={file.id}
-                onClick={() => {
-                  setActiveFile(file);
-                  setCode(file.content);
-                }}
-                className={`w-full text-left px-2 py-1.5 text-sm rounded ${
-                  activeFile?.id === file.id
-                    ? 'bg-primary/10 text-primary'
-                    : 'hover:bg-muted'
-                }`}
+  // File explorer component (reusable for mobile and desktop)
+  const FileExplorer = () => (
+    <div className="p-3 border-b border-border">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        Files
+      </h3>
+      <div className="space-y-1">
+        {files.map((file) => (
+          <button
+            key={file.id}
+            onClick={() => {
+              setActiveFile(file);
+              setCode(file.content);
+              setMobileTab('code'); // Switch to code view on mobile after selecting file
+            }}
+            className={`w-full text-left px-2 py-1.5 text-sm rounded ${
+              activeFile?.id === file.id
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  {file.filename}
-                </span>
-              </button>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              {file.filename}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Compilation output component (reusable)
+  const CompilationOutput = () => compilationResult && (
+    <div className="border-t border-border bg-card">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Terminal Output
+        </span>
+      </div>
+      <div className="p-4 max-h-48 overflow-y-auto custom-scrollbar">
+        {compilationResult.success ? (
+          <div className="flex items-center gap-2 text-green-500">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">Compilation successful!</span>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-destructive">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="font-medium">Compilation failed</span>
+            </div>
+            {compilationResult.errors?.map((error, i) => (
+              <pre key={i} className="text-xs text-destructive bg-destructive/10 p-2 rounded overflow-x-auto">
+                {error.message}
+              </pre>
             ))}
           </div>
-        </div>
+        )}
+        {compilationResult.warnings && compilationResult.warnings.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {compilationResult.warnings.map((warning, i) => (
+              <pre key={i} className="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded overflow-x-auto">
+                {warning.message}
+              </pre>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
-        {/* Lessons */}
+  return (
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
+      {/* Mobile Header */}
+      <div className="lg:hidden border-b border-border bg-card px-3 py-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="p-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </Button>
+            </Link>
+            <span className="text-sm font-medium truncate max-w-[150px]">{project.name}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {/* Save status indicator */}
+            {saveStatus === 'unsaved' && <div className="w-2 h-2 rounded-full bg-yellow-500" />}
+            {saveStatus === 'saving' && (
+              <svg className="w-4 h-4 animate-spin text-muted-foreground" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling} className="text-xs px-2">
+              {compiling ? '...' : 'Compile'}
+            </Button>
+            <ThemeToggle />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: Left Sidebar (hidden on mobile) */}
+      <div className="hidden lg:flex w-80 border-r border-border bg-card flex-col overflow-hidden">
+        <FileExplorer />
         <LessonSidebar
           lessons={lessons}
           progress={progress}
@@ -420,10 +502,10 @@ contract ${contractName} {
         />
       </div>
 
-      {/* Main Editor Area */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Toolbar */}
-        <div className="h-14 border-b border-border bg-card flex items-center justify-between px-4">
+        {/* Desktop Toolbar (hidden on mobile) */}
+        <div className="hidden lg:flex h-14 border-b border-border bg-card items-center justify-between px-4">
           {/* Left: Home + Project Name */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -438,9 +520,7 @@ contract ${contractName} {
             <div>
               <span className="text-sm font-medium">{project.name}</span>
               {activeFile && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  {activeFile.filename}
-                </span>
+                <span className="text-xs text-muted-foreground ml-2">{activeFile.filename}</span>
               )}
             </div>
           </div>
@@ -479,24 +559,9 @@ contract ${contractName} {
             <Button variant="outline" size="sm" onClick={compileCode} disabled={compiling}>
               {compiling ? (
                 <>
-                  <svg
-                    className="w-4 h-4 mr-2 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
+                  <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                   Compiling...
                 </>
@@ -513,7 +578,6 @@ contract ${contractName} {
               onCompile={compileCode}
               onDeploySuccess={(address, txHash) => {
                 setDeployedContract(address);
-                // Update the ABI state from compilation result
                 if (compilationResult?.abi) {
                   setContractAbi(compilationResult.abi);
                 }
@@ -529,18 +593,8 @@ contract ${contractName} {
               <>
                 <Link href={`/share/${project.id}`} target="_blank">
                   <Button variant="outline" size="sm" className="gap-2">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                      />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                     </svg>
                     Share
                   </Button>
@@ -557,32 +611,69 @@ contract ${contractName} {
             <div className="w-px h-6 bg-border mx-1" />
             <ThemeToggle />
             <div className="w-px h-6 bg-border mx-1" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowChat(!showChat)}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
+            <Button variant="ghost" size="sm" onClick={() => setShowChat(!showChat)}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </Button>
           </div>
         </div>
 
-        {/* Editor + Chat */}
+        {/* Main Editor + Chat (Desktop) / Tab Content (Mobile) */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Code Editor */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile: Tab Content */}
+          <div className="lg:hidden flex-1 flex flex-col overflow-hidden">
+            {mobileTab === 'code' && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1">
+                  <MonacoEditor
+                    height="100%"
+                    language="sol"
+                    theme="vs-dark"
+                    value={code}
+                    onChange={handleCodeChange}
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 13,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      tabSize: 4,
+                      wordWrap: 'on',
+                    }}
+                  />
+                </div>
+                <CompilationOutput />
+                {deployedContract && compilationResult?.abi && (
+                  <ContractInteraction contractAddress={deployedContract} abi={compilationResult.abi} />
+                )}
+              </div>
+            )}
+            {mobileTab === 'lessons' && (
+              <div className="flex-1 flex flex-col overflow-hidden bg-card">
+                <FileExplorer />
+                <LessonSidebar
+                  lessons={lessons}
+                  progress={progress}
+                  currentLesson={currentLesson}
+                  onSelectLesson={(lesson) => {
+                    setCurrentLesson(lesson);
+                    setMobileTab('code'); // Switch to code after selecting lesson
+                  }}
+                  projectId={project.id}
+                  currentCode={code}
+                />
+              </div>
+            )}
+            {mobileTab === 'chat' && (
+              <div className="flex-1 overflow-hidden">
+                <TutorChat project={project} currentLesson={currentLesson} currentCode={code} />
+              </div>
+            )}
+          </div>
+
+          {/* Desktop: Code Editor */}
+          <div className="hidden lg:flex flex-1 flex-col overflow-hidden">
             <div className="flex-1">
               <MonacoEditor
                 height="100%"
@@ -601,98 +692,57 @@ contract ${contractName} {
                 }}
               />
             </div>
-
-            {/* Compilation Output / Terminal */}
-            {compilationResult && (
-              <div className="border-t border-border bg-card">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Terminal Output
-                  </span>
-                </div>
-                <div className="p-4 max-h-48 overflow-y-auto custom-scrollbar">
-                {compilationResult.success ? (
-                  <div className="flex items-center gap-2 text-green-500">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span className="font-medium">
-                      Compilation successful!
-                    </span>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-destructive">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                      <span className="font-medium">Compilation failed</span>
-                    </div>
-                    {compilationResult.errors?.map((error, i) => (
-                      <pre
-                        key={i}
-                        className="text-xs text-destructive bg-destructive/10 p-2 rounded overflow-x-auto"
-                      >
-                        {error.message}
-                      </pre>
-                    ))}
-                  </div>
-                )}
-                {compilationResult.warnings && compilationResult.warnings.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {compilationResult.warnings.map((warning, i) => (
-                      <pre
-                        key={i}
-                        className="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded overflow-x-auto"
-                      >
-                        {warning.message}
-                      </pre>
-                    ))}
-                  </div>
-                )}
-                </div>
-              </div>
-            )}
-
-            {/* Contract Interaction Panel */}
+            <CompilationOutput />
             {deployedContract && compilationResult?.abi && (
-              <ContractInteraction
-                contractAddress={deployedContract}
-                abi={compilationResult.abi}
-              />
+              <ContractInteraction contractAddress={deployedContract} abi={compilationResult.abi} />
             )}
           </div>
 
-          {/* Tutor Chat */}
+          {/* Desktop: Tutor Chat */}
           {showChat && (
-            <div className="w-[480px] border-l border-border">
-              <TutorChat
-                project={project}
-                currentLesson={currentLesson}
-                currentCode={code}
-              />
+            <div className="hidden lg:block w-[480px] border-l border-border">
+              <TutorChat project={project} currentLesson={currentLesson} currentCode={code} />
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden border-t border-border bg-card">
+        <div className="flex">
+          <button
+            onClick={() => setMobileTab('code')}
+            className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${
+              mobileTab === 'code' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            Code
+          </button>
+          <button
+            onClick={() => setMobileTab('lessons')}
+            className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${
+              mobileTab === 'lessons' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            Lessons
+          </button>
+          <button
+            onClick={() => setMobileTab('chat')}
+            className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${
+              mobileTab === 'chat' ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            AI Tutor
+          </button>
         </div>
       </div>
     </div>
