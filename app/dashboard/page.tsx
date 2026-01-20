@@ -6,6 +6,7 @@ import { LearnModal } from '@/components/learn/LearnModal';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ProjectCard } from '@/components/dashboard/ProjectCard';
 import { ConnectButton } from '@/components/wallet/ConnectButton';
+import { AchievementsSection } from '@/components/achievements';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -88,6 +89,11 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Achievements Section */}
+      <div className="mt-8">
+        <AchievementsSection />
+      </div>
     </div>
   );
 }
