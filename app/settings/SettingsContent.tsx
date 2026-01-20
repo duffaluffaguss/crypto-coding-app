@@ -15,13 +15,26 @@ interface SettingsContentProps {
 
 // localStorage keys
 const FONT_SIZE_KEY = 'crypto-app-editor-font-size';
-const NOTIFICATIONS_KEY = 'crypto-app-email-notifications';
+const EMAIL_PREFS_KEY = 'crypto-app-email-preferences';
+
+interface EmailPreferences {
+  achievements: boolean;
+  streak_reminders: boolean;
+  weekly_digest: boolean;
+}
+
+const defaultEmailPrefs: EmailPreferences = {
+  achievements: true,
+  streak_reminders: true,
+  weekly_digest: true,
+};
 
 export function SettingsContent({ displayName, email }: SettingsContentProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [fontSize, setFontSize] = useState(14);
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [emailPrefs, setEmailPrefs] = useState<EmailPreferences>(defaultEmailPrefs);
+  const [savingPrefs, setSavingPrefs] = useState(false);
 
   // Load preferences from localStorage
   useEffect(() => {
@@ -32,9 +45,13 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
       setFontSize(parseInt(savedFontSize, 10));
     }
 
-    const savedNotifications = localStorage.getItem(NOTIFICATIONS_KEY);
-    if (savedNotifications !== null) {
-      setEmailNotifications(savedNotifications === 'true');
+    const savedEmailPrefs = localStorage.getItem(EMAIL_PREFS_KEY);
+    if (savedEmailPrefs) {
+      try {
+        setEmailPrefs({ ...defaultEmailPrefs, ...JSON.parse(savedEmailPrefs) });
+      } catch {
+        setEmailPrefs(defaultEmailPrefs);
+      }
     }
   }, []);
 
@@ -44,9 +61,24 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
     localStorage.setItem(FONT_SIZE_KEY, clampedSize.toString());
   };
 
-  const handleNotificationsChange = (enabled: boolean) => {
-    setEmailNotifications(enabled);
-    localStorage.setItem(NOTIFICATIONS_KEY, enabled.toString());
+  const handleEmailPrefChange = async (key: keyof EmailPreferences, enabled: boolean) => {
+    const newPrefs = { ...emailPrefs, [key]: enabled };
+    setEmailPrefs(newPrefs);
+    localStorage.setItem(EMAIL_PREFS_KEY, JSON.stringify(newPrefs));
+    
+    // Also save to profile in database (optional sync)
+    setSavingPrefs(true);
+    try {
+      await fetch('/api/profile/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_preferences: newPrefs }),
+      });
+    } catch {
+      // Silent fail - local storage is the source of truth for now
+    } finally {
+      setSavingPrefs(false);
+    }
   };
 
   if (!mounted) {
@@ -192,8 +224,8 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
 
       {/* Notifications Section */}
       <SettingsSection
-        title="Notifications"
-        description="Manage how we contact you"
+        title="Email Notifications"
+        description="Choose what emails you'd like to receive"
         icon={
           <svg
             className="w-5 h-5 text-primary"
@@ -205,28 +237,63 @@ export function SettingsContent({ displayName, email }: SettingsContentProps) {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
             />
           </svg>
         }
       >
         <div className="space-y-0">
           <SettingsItem
-            label="Email Notifications"
-            description="Receive updates about new features and achievements"
+            label="Achievement Notifications"
+            description="Get notified when you unlock new achievements"
           >
             <Button
-              variant={emailNotifications ? 'default' : 'outline'}
+              variant={emailPrefs.achievements ? 'default' : 'outline'}
               size="sm"
-              onClick={() => handleNotificationsChange(!emailNotifications)}
+              onClick={() => handleEmailPrefChange('achievements', !emailPrefs.achievements)}
+              disabled={savingPrefs}
               className="w-20"
             >
-              {emailNotifications ? 'On' : 'Off'}
+              {emailPrefs.achievements ? 'On' : 'Off'}
             </Button>
           </SettingsItem>
-          <div className="pt-2 text-xs text-muted-foreground italic">
-            Note: Email notifications are coming soon
-          </div>
+          <SettingsItem
+            label="Streak Reminders"
+            description="Receive reminders when your streak is about to expire"
+          >
+            <Button
+              variant={emailPrefs.streak_reminders ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleEmailPrefChange('streak_reminders', !emailPrefs.streak_reminders)}
+              disabled={savingPrefs}
+              className="w-20"
+            >
+              {emailPrefs.streak_reminders ? 'On' : 'Off'}
+            </Button>
+          </SettingsItem>
+          <SettingsItem
+            label="Weekly Digest"
+            description="Get a summary of your weekly progress every Sunday"
+          >
+            <Button
+              variant={emailPrefs.weekly_digest ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleEmailPrefChange('weekly_digest', !emailPrefs.weekly_digest)}
+              disabled={savingPrefs}
+              className="w-20"
+            >
+              {emailPrefs.weekly_digest ? 'On' : 'Off'}
+            </Button>
+          </SettingsItem>
+          {savingPrefs && (
+            <div className="pt-2 text-xs text-muted-foreground flex items-center gap-2">
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Saving preferences...
+            </div>
+          )}
         </div>
       </SettingsSection>
 
