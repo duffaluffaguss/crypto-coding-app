@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { logLessonCompleted } from '@/lib/activity';
 import { VerificationModal, VerificationErrorModal } from './VerificationModal';
+import { LessonHelpStats } from './LessonHelpButton';
 import type { Lesson, LearningProgress } from '@/types';
 
 interface LessonSidebarProps {
@@ -330,6 +331,8 @@ export function LessonSidebar({
                         ))}
                       </div>
                     )}
+                    {/* Help thread indicator */}
+                    <LessonHelpStats lessonId={lesson.id} className="mt-1.5" />
                   </div>
                 </div>
               </button>

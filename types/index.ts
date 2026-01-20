@@ -104,6 +104,68 @@ export interface ChatMessage {
   created_at: string;
 }
 
+// Lesson Help Types
+export type HelpNotificationType = 'new_question' | 'new_answer' | 'question_answered' | 'answer_accepted';
+
+export interface LessonQuestion {
+  id: string;
+  lesson_id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  is_answered: boolean;
+  is_pinned: boolean;
+  helpful_count: number;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  user_profile?: Profile;
+  answers_count?: number;
+  user_has_voted?: boolean;
+  user_vote_helpful?: boolean;
+}
+
+export interface LessonQuestionAnswer {
+  id: string;
+  question_id: string;
+  user_id: string;
+  content: string;
+  helpful_count: number;
+  is_accepted: boolean;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  user_profile?: Profile;
+  user_has_voted?: boolean;
+  user_vote_helpful?: boolean;
+}
+
+export interface LessonHelpVote {
+  id: string;
+  user_id: string;
+  question_id: string | null;
+  answer_id: string | null;
+  is_helpful: boolean;
+  created_at: string;
+}
+
+export interface LessonHelpNotification {
+  id: string;
+  recipient_id: string;
+  sender_id: string;
+  lesson_id: string;
+  question_id: string | null;
+  answer_id: string | null;
+  notification_type: HelpNotificationType;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  // Joined fields
+  sender_profile?: Profile;
+}
+
 // AI Types
 export interface GeneratedProject {
   name: string;
