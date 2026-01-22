@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserCheck, Star, Users, Award } from 'lucide-react';
@@ -32,7 +32,7 @@ export function MentorBadge({ userId, size = 'sm', className, showStats = false 
   useEffect(() => {
     async function fetchMentorInfo() {
       try {
-        const supabase = createClientComponentClient();
+        const supabase = createClient();
 
         // Get mentor availability info
         const { data: mentorProfile } = await supabase
@@ -182,7 +182,7 @@ export function useMentorStatus(userId: string) {
   useEffect(() => {
     async function checkMentorStatus() {
       try {
-        const supabase = createClientComponentClient();
+        const supabase = createClient();
         const { data } = await supabase
           .from('mentor_availability')
           .select('is_available')

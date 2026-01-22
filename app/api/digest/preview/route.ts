@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generateUserWeeklyDigest } from '@/lib/email-digest';
 import { render } from '@react-email/render';
-import WeeklyDigestEmail from '@/emails/WeeklyDigest';
+import { WeeklyDigestEmail } from '@/emails/weekly-digest';
 
 interface PreviewRequest {
   userId?: string; // Optional: preview for specific user, otherwise use current user

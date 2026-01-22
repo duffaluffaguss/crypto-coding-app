@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export default function CollaboratorsList({
   const [collaboratorToRemove, setCollaboratorToRemove] = useState<ProjectCollaborator | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const canManageCollaborators = canUserManageCollaborators(userRole);
 
   useEffect(() => {

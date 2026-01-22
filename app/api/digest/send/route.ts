@@ -7,7 +7,7 @@ import {
 } from '@/lib/email-digest';
 import { sendEmail } from '@/lib/email';
 import { render } from '@react-email/render';
-import WeeklyDigestEmail from '@/emails/WeeklyDigest';
+import { WeeklyDigestEmail } from '@/emails/weekly-digest';
 
 interface SendDigestRequest {
   userId?: string; // Optional: send to specific user, otherwise send to all eligible users

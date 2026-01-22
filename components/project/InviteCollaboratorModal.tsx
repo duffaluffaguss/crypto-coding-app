@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -49,7 +49,7 @@ export default function InviteCollaboratorModal({
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
 
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {

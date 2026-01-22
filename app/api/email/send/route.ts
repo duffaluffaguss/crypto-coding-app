@@ -7,7 +7,7 @@ import {
   generateStreakReminderEmail,
 } from '@/lib/email';
 import { render } from '@react-email/render';
-import WeeklyDigestEmail from '@/emails/WeeklyDigest';
+import { WeeklyDigestEmail } from '@/emails/weekly-digest';
 
 export type EmailType = 'welcome' | 'achievement' | 'streak-reminder' | 'weekly-digest';
 

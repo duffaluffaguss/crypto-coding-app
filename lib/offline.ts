@@ -35,6 +35,11 @@ class OfflineDB {
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
+    // Guard against server-side rendering
+    if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
+      return Promise.resolve();
+    }
+    
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -160,6 +165,9 @@ class OfflineManager {
   }
 
   private setupEventListeners() {
+    // Guard against server-side rendering
+    if (typeof window === 'undefined') return;
+    
     // Online/offline events
     window.addEventListener('online', () => {
       this.updateOnlineStatus(true);
@@ -182,6 +190,9 @@ class OfflineManager {
   }
 
   private updateOnlineStatus(online?: boolean) {
+    // Guard against server-side rendering
+    if (typeof window === 'undefined') return;
+    
     const wasOffline = !this.state.isOnline;
     this.state.isOnline = online !== undefined ? online : navigator.onLine;
     

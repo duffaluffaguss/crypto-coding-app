@@ -19,8 +19,8 @@ import { OnboardingTour, useTour } from '@/components/tour/OnboardingTour';
 import { DeploymentHistory } from '@/components/deployments';
 import { SubmitTemplateModal } from '@/components/templates/SubmitTemplateModal';
 import { SubmitSnippetModal } from '@/components/snippets/SubmitSnippetModal';
-import { InviteCollaboratorModal } from '@/components/project/InviteCollaboratorModal';
-import { CollaboratorsList } from '@/components/project/CollaboratorsList';
+import InviteCollaboratorModal from '@/components/project/InviteCollaboratorModal';
+import CollaboratorsList from '@/components/project/CollaboratorsList';
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from '@/components/help/KeyboardShortcutsModal';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -161,7 +161,7 @@ export function ProjectIDE({ project, initialFiles, lessons, progress }: Project
   }, []);
 
   // Handle editor mount to get reference
-  const handleEditorDidMount = useCallback((editor: any) => {
+  const handleEditorMountRef = useCallback((editor: any) => {
     editorRef.current = editor;
   }, []);
 
@@ -896,7 +896,7 @@ contract ${contractName} {
                 }
                 await compileCode();
               }}
-              onDeploySuccess={(address, txHash) => {
+              onDeploySuccess={async (address, txHash) => {
                 setDeployedContract(address);
                 if (compilationResult?.abi) {
                   setContractAbi(compilationResult.abi);

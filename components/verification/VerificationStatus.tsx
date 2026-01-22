@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -54,7 +54,7 @@ const VERIFICATION_BENEFITS = [
 export function VerificationStatus({ userId, className }: VerificationStatusProps) {
   const [verifications, setVerifications] = useState<UserVerification>({});
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   useEffect(() => {
     loadVerifications();
@@ -400,7 +400,7 @@ function VerificationItemRow({ item }: { item: VerificationItem }) {
 export function VerificationStatusCompact({ userId, className }: VerificationStatusProps) {
   const [verifications, setVerifications] = useState<UserVerification>({});
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   useEffect(() => {
     loadVerifications();

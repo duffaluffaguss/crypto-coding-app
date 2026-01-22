@@ -1,10 +1,7 @@
+'use client';
+
 import { WifiOff, RefreshCw, Home, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-
-export const metadata = {
-  title: 'Offline | CryptoDev',
-  description: 'You are currently offline',
-};
 
 export default function OfflinePage() {
   return (

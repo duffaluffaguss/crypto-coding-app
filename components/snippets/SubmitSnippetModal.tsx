@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,7 +36,7 @@ export function SubmitSnippetModal({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   // Reset form when modal opens/closes
   useEffect(() => {

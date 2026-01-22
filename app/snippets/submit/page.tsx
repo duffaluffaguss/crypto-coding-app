@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useState, useEffect, Suspense } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,10 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SNIPPET_CATEGORIES } from '@/lib/code-snippets';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
 import Link from 'next/link';
 
-export default function SubmitSnippetPage() {
+function SubmitSnippetForm() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,7 +27,7 @@ export default function SubmitSnippetPage() {
   
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   useEffect(() => {
     // Pre-fill with code if passed via query params (from IDE)
@@ -279,5 +278,21 @@ export default function SubmitSnippetPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SubmitSnippetPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <SubmitSnippetForm />
+    </Suspense>
   );
 }

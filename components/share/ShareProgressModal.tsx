@@ -57,10 +57,10 @@ export function ShareProgressModal({
     }
 
     const achievementText = achievements.length > 0 
-      ? `\\n\\n${achievements.join('\\n')}`
+      ? `\n\n${achievements.join('\n')}`
       : '';
 
-    return `${name === 'I' ? 'I\\'m' : `${name} is`} building the future with Web3! 🌟${achievementText}\\n\\nJoin me on Zero to Crypto Dev 👇`;
+    return `${name === 'I' ? "I'm" : `${name} is`} building the future with Web3! 🌟${achievementText}\n\nJoin me on Zero to Crypto Dev 👇`;
   };
 
   // Generate share URL

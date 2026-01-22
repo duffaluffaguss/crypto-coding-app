@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Check, X, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAccount, useSignMessage } from 'wagmi';
@@ -34,7 +34,7 @@ export function ENSVerifyButton({
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { toast } = useToast();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const buttonSizes = {
     sm: 'h-8 px-3 text-sm',

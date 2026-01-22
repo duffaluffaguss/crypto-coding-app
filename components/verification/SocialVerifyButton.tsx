@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Twitter, Github, MessageCircle, Check, X, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -50,7 +50,7 @@ export function SocialVerifyButton({
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const { toast } = useToast();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   
   const config = platformConfig[platform];
   const Icon = config.icon;
@@ -222,7 +222,7 @@ export function SocialVerifyButton({
 export function SocialVerificationList({ userId }: { userId: string }) {
   const [verifications, setVerifications] = useState<SocialVerification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   useEffect(() => {
     loadVerifications();

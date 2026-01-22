@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -70,7 +70,7 @@ export function VerificationBadges({
 }: VerificationBadgesProps) {
   const [verifications, setVerifications] = useState<UserVerification>(propVerifications || {});
   const [isLoading, setIsLoading] = useState(!propVerifications);
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   useEffect(() => {
     if (!propVerifications) {
