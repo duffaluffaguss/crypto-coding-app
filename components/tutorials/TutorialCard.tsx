@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tutorial, categoryLabels, categoryColors, difficultyColors } from '@/lib/tutorials';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
@@ -18,11 +19,7 @@ export function TutorialCard({ tutorial, isWatched }: TutorialCardProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const supabase = createClient();
 
-  useEffect(() => {
-    checkBookmarkStatus();
-  }, [tutorial.id]);
-
-  const checkBookmarkStatus = async () => {
+  const checkBookmarkStatus = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setIsLoggedIn(!!user);
     if (!user) return;
@@ -36,17 +33,23 @@ export function TutorialCard({ tutorial, isWatched }: TutorialCardProps) {
       .single();
 
     setIsBookmarked(!!data);
-  };
+  }, [supabase, tutorial.id]);
+
+  useEffect(() => {
+    checkBookmarkStatus();
+  }, [checkBookmarkStatus]);
 
   return (
     <Link href={`/tutorials/${tutorial.id}`}>
       <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-primary/50 h-full">
         {/* Thumbnail */}
         <div className="relative aspect-video bg-muted overflow-hidden">
-          <img
+          <Image
             src={thumbnailUrl}
             alt={tutorial.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
           {/* Duration Badge */}
           <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 text-white text-xs font-medium rounded">
